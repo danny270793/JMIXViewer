@@ -7,6 +7,7 @@ import '../application/use_cases/jmix/load_entity_list_page_use_case.dart';
 import '../auth/foodie_session.dart';
 import '../business/jmix/entity_list_pagination.dart';
 import '../business/jmix/entity_list_search.dart';
+import '../business/jmix/entity_list_search_operators.dart';
 import '../business/jmix/entity_messages_labels.dart';
 import '../domain/jmix/drawer_entities_result.dart';
 import '../logging/app_logger.dart';
@@ -128,14 +129,20 @@ class EntityListSearchNotifier extends Notifier<EntityListSearch?> {
   }
 
   void apply(EntityListSearch value) {
-    final q = value.query.trim();
+    final active = entityListSearchIsActive(value);
     AppLogger.logUserAction(
       'home.entityList.search',
-      q.isEmpty ? 'clear' : '${value.fieldKey}: $q',
+      active
+          ? '${value.fieldKey} ${value.op} ${value.query}'
+          : 'clear',
     );
-    state = q.isEmpty
-        ? null
-        : EntityListSearch(fieldKey: value.fieldKey, query: q);
+    state = active
+        ? EntityListSearch(
+            fieldKey: value.fieldKey,
+            op: value.op,
+            query: value.query.trim(),
+          )
+        : null;
     ref.read(entityListProvider.notifier).refresh();
   }
 
