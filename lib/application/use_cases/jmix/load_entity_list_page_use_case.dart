@@ -1,11 +1,11 @@
 import '../../../api/jmix/jmix_rest_connector.dart';
 import '../../../api/jmix/models/jmix_entity_list_result.dart';
-import '../../../business/business_ops.dart';
 import '../../../business/jmix/entity_list_pagination.dart';
+import '../../business_use_case.dart';
 
 /// Loads one page of rows for a Jmix generic entity list.
-final class LoadEntityListPageUseCase {
-  LoadEntityListPageUseCase(this._rest);
+final class LoadEntityListPageUseCase extends BusinessUseCase {
+  LoadEntityListPageUseCase(this._rest) : super();
 
   final JmixRestConnector _rest;
 
@@ -14,7 +14,7 @@ final class LoadEntityListPageUseCase {
     required String? entityName,
     required int pageIndex,
   }) {
-    return BusinessOps.run('home.entityList', () async {
+    return run('home.entityList', () async {
       if (entityName == null) return null;
       return _rest.loadEntities(
         entityName,
