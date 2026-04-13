@@ -137,4 +137,35 @@ class AppLocalizationsEs extends AppLocalizations {
   String entityRecordSaveFailed(String error) {
     return 'Error al guardar: $error';
   }
+
+  @override
+  String get homeEntityListSortTooltip => 'Ordenar lista';
+
+  @override
+  String get homeEntityListSortTitle => 'Ordenar lista';
+
+  @override
+  String get homeEntityListSortField => 'Ordenar por';
+
+  @override
+  String get homeEntityListSortOrder => 'Orden';
+
+  @override
+  String get homeEntityListSortAscending => 'Ascendente';
+
+  @override
+  String get homeEntityListSortDescending => 'Descendente';
+
+  @override
+  String get homeEntityListSortDefaultOrder => 'Orden predeterminado';
+
+  @override
+  String get homeEntityListSortApply => 'Aplicar';
+
+  @override
+  String get homeEntityListSortLoadingFields => 'Cargando campos…';
+
+  @override
+  String get homeEntityListSortNoFields =>
+      'No hay campos disponibles para ordenar.';
 }
