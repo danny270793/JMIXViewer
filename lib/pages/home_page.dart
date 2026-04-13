@@ -14,10 +14,6 @@ import '../widgets/pagination_bar.dart';
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
-  void _closeDrawer(BuildContext context) {
-    Scaffold.maybeOf(context)?.closeDrawer();
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
@@ -27,34 +23,36 @@ class HomePage extends ConsumerWidget {
 
     return Scaffold(
       drawer: Drawer(
-        child: SafeArea(
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              DrawerHeader(
-                decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Icon(
-                      Icons.view_in_ar_rounded,
-                      size: 40,
-                      color: colorScheme.primary,
+        child: Builder(
+          builder: (drawerContext) {
+            return SafeArea(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  DrawerHeader(
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.homeTitle,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: colorScheme.onPrimaryContainer,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Icon(
+                          Icons.view_in_ar_rounded,
+                          size: 40,
+                          color: colorScheme.primary,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          l10n.homeTitle,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            color: colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-              ref.watch(drawerEntitiesProvider).when(
+                  ),
+                  ref.watch(drawerEntitiesProvider).when(
                     loading: () => const Padding(
                       padding: EdgeInsets.symmetric(vertical: 16),
                       child: Center(
@@ -120,15 +118,18 @@ class HomePage extends ConsumerWidget {
                                 ref
                                     .read(homeSelectionProvider.notifier)
                                     .selectEntity(entityDisplayName(meta));
-                                _closeDrawer(context);
+                                Scaffold.maybeOf(drawerContext)
+                                    ?.closeDrawer();
                               },
                             ),
                         ],
                       );
                     },
                   ),
-            ],
-          ),
+                ],
+              ),
+            );
+          },
         ),
       ),
       appBar: AppBar(
