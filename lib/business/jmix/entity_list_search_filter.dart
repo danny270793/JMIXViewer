@@ -1,17 +1,42 @@
+import 'entity_list_search_operators.dart';
+
 /// JSON for Jmix `GET entities/{name}/search` `filter` query parameter.
-///
-/// Uses a single `contains` condition (case depends on DB/collation).
-Map<String, dynamic> entityListSearchContainsFilter(
-  String property,
-  String value,
-) {
-  return <String, dynamic>{
-    'conditions': [
-      <String, dynamic>{
-        'property': property,
-        'operator': 'contains',
-        'value': value,
-      },
-    ],
-  };
+Map<String, dynamic> entityListSearchRestFilter({
+  required String property,
+  required String op,
+  required String query,
+}) {
+  switch (op) {
+    case 'isNull':
+    case 'notEmpty':
+      return <String, dynamic>{
+        'conditions': [
+          <String, dynamic>{
+            'property': property,
+            'operator': op,
+          },
+        ],
+      };
+    case 'in':
+    case 'notIn':
+      return <String, dynamic>{
+        'conditions': [
+          <String, dynamic>{
+            'property': property,
+            'operator': op,
+            'value': entityListSearchParseInList(query),
+          },
+        ],
+      };
+    default:
+      return <String, dynamic>{
+        'conditions': [
+          <String, dynamic>{
+            'property': property,
+            'operator': op,
+            'value': query.trim(),
+          },
+        ],
+      };
+  }
 }
