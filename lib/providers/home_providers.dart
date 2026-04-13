@@ -6,6 +6,7 @@ import '../api/jmix/models/jmix_entity_list_result.dart';
 import '../auth/foodie_session.dart';
 import '../business/jmix/drawer_entities.dart';
 import '../business/jmix/entity_list_pagination.dart';
+import '../logging/app_logger.dart';
 
 /// Jmix REST client used for home (same instance as [FoodieSession]).
 final jmixRestConnectorProvider = Provider<JmixRestConnector>((ref) {
@@ -35,12 +36,17 @@ class HomeSelectionNotifier extends Notifier<HomeSelection> {
   HomeSelection build() => const HomeSelection();
 
   void selectEntity(String name) {
+    AppLogger.logUserAction('home.selectEntity', name);
     state = HomeSelection(selectedEntityName: name, pageIndex: 0);
   }
 
-  void clear() => state = const HomeSelection();
+  void clear() {
+    AppLogger.logUserAction('home.clearSelection');
+    state = const HomeSelection();
+  }
 
   void setPage(int page) {
+    AppLogger.logUserAction('home.setPage', '$page');
     state = HomeSelection(
       selectedEntityName: state.selectedEntityName,
       pageIndex: page,
