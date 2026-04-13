@@ -1,4 +1,4 @@
-/// User-chosen UI language (persisted via [localePreferenceProvider]).
+/// User-chosen UI language for the app settings flow.
 enum AppLocalePreference {
   system,
   english,
