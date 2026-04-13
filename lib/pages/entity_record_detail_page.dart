@@ -682,6 +682,26 @@ class _AttributeEditor extends ConsumerWidget {
     );
   }
 
+  Future<void> _pickDateTimeValue(BuildContext context) async {
+    final c = controllers[fieldKey];
+    if (c == null || !context.mounted) return;
+    var base = DateTime.tryParse(c.text.trim()) ?? DateTime.now();
+    final d = await showDatePicker(
+      context: context,
+      initialDate: base,
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100),
+    );
+    if (d == null || !context.mounted) return;
+    final t = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(base),
+    );
+    if (t == null || !context.mounted) return;
+    final dt = DateTime(d.year, d.month, d.day, t.hour, t.minute);
+    c.text = dt.toIso8601String();
+  }
+
   Widget _dateTimeRow(BuildContext context, ThemeData theme) {
     final c = controllers[fieldKey];
     if (c == null) {
@@ -693,36 +713,23 @@ class _AttributeEditor extends ConsumerWidget {
         Expanded(
           child: TextField(
             controller: c,
+            readOnly: true,
+            showCursor: false,
+            enableInteractiveSelection: false,
             style: theme.textTheme.bodyLarge?.copyWith(
               color: colorScheme.onSurface,
               height: 1.35,
             ),
-            keyboardType: TextInputType.datetime,
             decoration: _decoration().copyWith(
-              hintText: 'ISO-8601 date-time',
+              hintText: 'Tap to set date & time',
             ),
+            onTap: () => _pickDateTimeValue(context),
           ),
         ),
         IconButton(
-          tooltip: MaterialLocalizations.of(context).datePickerHelpText,
+          tooltip: 'Select date and time',
           icon: const Icon(Icons.event),
-          onPressed: () async {
-            var base = DateTime.tryParse(c.text.trim()) ?? DateTime.now();
-            final d = await showDatePicker(
-              context: context,
-              initialDate: base,
-              firstDate: DateTime(1900),
-              lastDate: DateTime(2100),
-            );
-            if (d == null || !context.mounted) return;
-            final t = await showTimePicker(
-              context: context,
-              initialTime: TimeOfDay.fromDateTime(base),
-            );
-            if (t == null || !context.mounted) return;
-            final dt = DateTime(d.year, d.month, d.day, t.hour, t.minute);
-            c.text = dt.toIso8601String();
-          },
+          onPressed: () => _pickDateTimeValue(context),
         ),
       ],
     );
