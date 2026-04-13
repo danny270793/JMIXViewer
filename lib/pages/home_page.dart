@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../api/jmix/models/jmix_entity_list_result.dart';
 import '../auth/foodie_session.dart';
 import '../l10n/app_localizations.dart';
 import '../router/app_router.dart';
@@ -14,7 +17,13 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  static const int _pageSize = 20;
+
   late final Future<List<Map<String, dynamic>>> _entitiesFuture;
+
+  String? _selectedEntityName;
+  int _pageIndex = 0;
+  Future<JmixEntityListResult>? _listFuture;
 
   @override
   void initState() {
@@ -24,6 +33,38 @@ class _HomePageState extends State<HomePage> {
 
   void _closeDrawer(BuildContext context) {
     Scaffold.maybeOf(context)?.closeDrawer();
+  }
+
+  void _selectEntity(String entityName) {
+    setState(() {
+      _selectedEntityName = entityName;
+      _pageIndex = 0;
+      _listFuture = _loadCurrentPage();
+    });
+  }
+
+  void _clearSelection() {
+    setState(() {
+      _selectedEntityName = null;
+      _pageIndex = 0;
+      _listFuture = null;
+    });
+  }
+
+  void _setPage(int page) {
+    setState(() {
+      _pageIndex = page;
+      _listFuture = _loadCurrentPage();
+    });
+  }
+
+  Future<JmixEntityListResult> _loadCurrentPage() {
+    return FoodieSession.instance.rest.loadEntities(
+      _selectedEntityName!,
+      limit: '$_pageSize',
+      offset: '${_pageIndex * _pageSize}',
+      returnCount: true,
+    );
   }
 
   @override
@@ -118,7 +159,10 @@ class _HomePageState extends State<HomePage> {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          onTap: () => _closeDrawer(context),
+                          onTap: () {
+                            _selectEntity(_entityDisplayName(meta));
+                            _closeDrawer(context);
+                          },
                         ),
                     ],
                   );
@@ -129,7 +173,17 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       appBar: AppBar(
-        title: Text(l10n.homeTitle),
+        leading: _selectedEntityName != null
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: _clearSelection,
+              )
+            : null,
+        title: Text(
+          _selectedEntityName ?? l10n.homeTitle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),
@@ -138,36 +192,199 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.check_circle_outline,
-                size: 64,
-                color: colorScheme.primary,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                l10n.connectedToFoodie,
-                style: Theme.of(context).textTheme.headlineSmall,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                l10n.signedInBody,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
+      body: _selectedEntityName == null
+          ? _buildWelcomeBody(context, colorScheme, l10n)
+          : _buildEntityTable(theme),
+    );
+  }
+
+  Widget _buildWelcomeBody(
+    BuildContext context,
+    ColorScheme colorScheme,
+    AppLocalizations l10n,
+  ) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.check_circle_outline,
+              size: 64,
+              color: colorScheme.primary,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              l10n.connectedToFoodie,
+              style: Theme.of(context).textTheme.headlineSmall,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.signedInBody,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  Widget _buildEntityTable(ThemeData theme) {
+    return FutureBuilder<JmixEntityListResult>(
+      future: _listFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${snapshot.error}',
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _listFuture = _loadCurrentPage();
+                      });
+                    },
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        final result = snapshot.data!;
+        final items = result.items;
+        if (items.isEmpty) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: Center(
+                  child: Text(
+                    'No rows on this page',
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                ),
+              ),
+              _PaginationBar(
+                pageIndex: _pageIndex,
+                pageSize: _pageSize,
+                itemCount: 0,
+                totalCount: result.totalCount,
+                onPrevious:
+                    _pageIndex > 0 ? () => _setPage(_pageIndex - 1) : null,
+                onNext: _hasNextPage(result)
+                    ? () => _setPage(_pageIndex + 1)
+                    : null,
+              ),
+            ],
+          );
+        }
+
+        final keys = _columnKeys(items);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SingleChildScrollView(
+                  child: DataTable(
+                    headingRowHeight: 40,
+                    dataRowMinHeight: 36,
+                    dataRowMaxHeight: 72,
+                    columns: [
+                      for (final k in keys)
+                        DataColumn(
+                          label: Text(
+                            k,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                    ],
+                    rows: [
+                      for (final row in items)
+                        DataRow(
+                          cells: [
+                            for (final k in keys)
+                              DataCell(
+                                Tooltip(
+                                  message: _cellText(row[k]),
+                                  child: Text(
+                                    _cellText(row[k]),
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            _PaginationBar(
+              pageIndex: _pageIndex,
+              pageSize: _pageSize,
+              itemCount: items.length,
+              totalCount: result.totalCount,
+              onPrevious:
+                  _pageIndex > 0 ? () => _setPage(_pageIndex - 1) : null,
+              onNext: _hasNextPage(result)
+                  ? () => _setPage(_pageIndex + 1)
+                  : null,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  bool _hasNextPage(JmixEntityListResult result) {
+    final total = result.totalCount;
+    final end = _pageIndex * _pageSize + result.items.length;
+    if (total != null) {
+      return end < total;
+    }
+    return result.items.length == _pageSize;
+  }
+
+  /// Union of JSON keys for the current page, sorted.
+  List<String> _columnKeys(List<Map<String, dynamic>> items) {
+    final keys = <String>{};
+    for (final row in items) {
+      keys.addAll(row.keys);
+    }
+    return keys.toList()..sort();
+  }
+
+  String _cellText(dynamic value) {
+    if (value == null) return '—';
+    if (value is String) return value;
+    if (value is num || value is bool) return value.toString();
+    try {
+      final s = jsonEncode(value);
+      if (s.length > 200) return '${s.substring(0, 197)}…';
+      return s;
+    } catch (_) {
+      return value.toString();
+    }
   }
 
   /// Jmix `metadata/entities` items use `entityName` (see OpenAPI `entityMetadata`).
@@ -175,5 +392,61 @@ class _HomePageState extends State<HomePage> {
     final name = meta['entityName'];
     if (name is String && name.isNotEmpty) return name;
     return '?';
+  }
+}
+
+class _PaginationBar extends StatelessWidget {
+  const _PaginationBar({
+    required this.pageIndex,
+    required this.pageSize,
+    required this.itemCount,
+    required this.totalCount,
+    required this.onPrevious,
+    required this.onNext,
+  });
+
+  final int pageIndex;
+  final int pageSize;
+  final int itemCount;
+  final int? totalCount;
+  final VoidCallback? onPrevious;
+  final VoidCallback? onNext;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final start = pageIndex * pageSize + (itemCount > 0 ? 1 : 0);
+    final end = pageIndex * pageSize + itemCount;
+    final label = totalCount != null
+        ? (itemCount > 0 ? 'Rows $start–$end of $totalCount' : 'Page ${pageIndex + 1}')
+        : (itemCount > 0 ? 'Rows $start–$end' : 'No rows');
+
+    return Material(
+      elevation: 1,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Row(
+          children: [
+            IconButton(
+              tooltip: 'Previous page',
+              icon: const Icon(Icons.chevron_left),
+              onPressed: onPrevious,
+            ),
+            Expanded(
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium,
+              ),
+            ),
+            IconButton(
+              tooltip: 'Next page',
+              icon: const Icon(Icons.chevron_right),
+              onPressed: onNext,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
