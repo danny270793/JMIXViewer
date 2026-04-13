@@ -186,4 +186,25 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get homeEntityListSortNoFields =>
       'No hay campos disponibles para ordenar.';
+
+  @override
+  String get homeEntityListSearchTooltip => 'Buscar en la lista';
+
+  @override
+  String get homeEntityListSearchTitle => 'Buscar';
+
+  @override
+  String get homeEntityListSearchField => 'Buscar en el campo';
+
+  @override
+  String get homeEntityListSearchQueryHint => 'Texto a buscar';
+
+  @override
+  String get homeEntityListSearchClear => 'Quitar búsqueda';
+
+  @override
+  String get homeEntityListSearchApply => 'Aplicar';
+
+  @override
+  String get homeEntityListSearchLoadingFields => 'Cargando campos…';
 }
