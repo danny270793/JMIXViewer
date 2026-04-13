@@ -82,4 +82,36 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get signOut => 'Cerrar sesión';
+
+  @override
+  String get languageSection => 'Idioma';
+
+  @override
+  String get languageOption => 'Idioma de la app';
+
+  @override
+  String get languageSubtitle =>
+      'Igual que el dispositivo o elige inglés o español para la interfaz.';
+
+  @override
+  String get languageSheetTitle => 'Idioma de la app';
+
+  @override
+  String get languageSystem => 'Sistema';
+
+  @override
+  String get languageEnglish => 'Inglés';
+
+  @override
+  String get languageSpanish => 'Español';
+
+  @override
+  String get languageSystemDesc =>
+      'Usar el idioma del dispositivo si la app lo admite';
+
+  @override
+  String get languageEnglishDesc => 'Mostrar siempre la interfaz en inglés';
+
+  @override
+  String get languageSpanishDesc => 'Mostrar siempre la interfaz en español';
 }
