@@ -24,12 +24,16 @@ final class ParsedAttributeMeta {
     required this.kind,
     this.enumClassName,
     this.referenceEntityType,
+    this.mandatory = false,
   });
 
   final String name;
   final AttributeInputKind kind;
   final String? enumClassName;
   final String? referenceEntityType;
+
+  /// From metadata `properties[].mandatory` (Bean Validation / required attributes).
+  final bool mandatory;
 
   /// Builds [propertyByName] from raw entity metadata JSON (`properties` list).
   static Map<String, Map<String, dynamic>> propertyMapFromEntityMeta(
@@ -65,6 +69,7 @@ final class ParsedAttributeMeta {
       return ParsedAttributeMeta(
         name: fieldName,
         kind: AttributeInputKind.readOnlyDisplay,
+        mandatory: property?['mandatory'] == true,
       );
     }
     if (entityMetadataAvailable) {
@@ -84,11 +89,20 @@ final class ParsedAttributeMeta {
 
   static ParsedAttributeMeta fromProperty(Map<String, dynamic> p) {
     final name = p['name'] as String? ?? '';
+    final mandatory = p['mandatory'] == true;
     if (name == 'version') {
-      return ParsedAttributeMeta(name: name, kind: AttributeInputKind.readOnlyDisplay);
+      return ParsedAttributeMeta(
+        name: name,
+        kind: AttributeInputKind.readOnlyDisplay,
+        mandatory: mandatory,
+      );
     }
     if (p['readOnly'] == true) {
-      return ParsedAttributeMeta(name: name, kind: AttributeInputKind.readOnlyDisplay);
+      return ParsedAttributeMeta(
+        name: name,
+        kind: AttributeInputKind.readOnlyDisplay,
+        mandatory: mandatory,
+      );
     }
 
     final attrType = p['attributeType'] as String?;
@@ -101,6 +115,7 @@ final class ParsedAttributeMeta {
           name: name,
           kind: AttributeInputKind.enumDropdown,
           enumClassName: type,
+          mandatory: mandatory,
         );
       case 'ASSOCIATION':
       case 'COMPOSITION':
@@ -109,56 +124,106 @@ final class ParsedAttributeMeta {
             name: name,
             kind: AttributeInputKind.collectionJson,
             referenceEntityType: type,
+            mandatory: mandatory,
           );
         }
         return ParsedAttributeMeta(
           name: name,
           kind: AttributeInputKind.referenceManyToOne,
           referenceEntityType: type,
+          mandatory: mandatory,
         );
       case 'DATATYPE':
-        return _fromDatatype(name, type);
+        return _fromDatatype(name, type, mandatory: mandatory);
       default:
-        return ParsedAttributeMeta(name: name, kind: AttributeInputKind.jsonBlob);
+        return ParsedAttributeMeta(
+          name: name,
+          kind: AttributeInputKind.jsonBlob,
+          mandatory: mandatory,
+        );
     }
   }
 
-  static ParsedAttributeMeta _fromDatatype(String name, String type) {
+  static ParsedAttributeMeta _fromDatatype(
+    String name,
+    String type, {
+    required bool mandatory,
+  }) {
     final t = type.toLowerCase();
     switch (t) {
       case 'boolean':
-        return ParsedAttributeMeta(name: name, kind: AttributeInputKind.boolean);
+        return ParsedAttributeMeta(
+          name: name,
+          kind: AttributeInputKind.boolean,
+          mandatory: mandatory,
+        );
       case 'int':
       case 'integer':
       case 'long':
       case 'short':
       case 'byte':
-        return ParsedAttributeMeta(name: name, kind: AttributeInputKind.integer);
+        return ParsedAttributeMeta(
+          name: name,
+          kind: AttributeInputKind.integer,
+          mandatory: mandatory,
+        );
       case 'double':
       case 'float':
       case 'decimal':
       case 'bigdecimal':
-        return ParsedAttributeMeta(name: name, kind: AttributeInputKind.decimal);
+        return ParsedAttributeMeta(
+          name: name,
+          kind: AttributeInputKind.decimal,
+          mandatory: mandatory,
+        );
       case 'localdate':
       case 'date':
-        return ParsedAttributeMeta(name: name, kind: AttributeInputKind.date);
+        return ParsedAttributeMeta(
+          name: name,
+          kind: AttributeInputKind.date,
+          mandatory: mandatory,
+        );
       case 'localdatetime':
       case 'offsetdatetime':
       case 'datetime':
-        return ParsedAttributeMeta(name: name, kind: AttributeInputKind.dateTime);
+        return ParsedAttributeMeta(
+          name: name,
+          kind: AttributeInputKind.dateTime,
+          mandatory: mandatory,
+        );
       case 'localtime':
       case 'offsettime':
       case 'time':
-        return ParsedAttributeMeta(name: name, kind: AttributeInputKind.time);
+        return ParsedAttributeMeta(
+          name: name,
+          kind: AttributeInputKind.time,
+          mandatory: mandatory,
+        );
       case 'uuid':
-        return ParsedAttributeMeta(name: name, kind: AttributeInputKind.uuid);
+        return ParsedAttributeMeta(
+          name: name,
+          kind: AttributeInputKind.uuid,
+          mandatory: mandatory,
+        );
       case 'string':
-        return ParsedAttributeMeta(name: name, kind: AttributeInputKind.plainString);
+        return ParsedAttributeMeta(
+          name: name,
+          kind: AttributeInputKind.plainString,
+          mandatory: mandatory,
+        );
       case 'text':
       case 'clob':
-        return ParsedAttributeMeta(name: name, kind: AttributeInputKind.multilineString);
+        return ParsedAttributeMeta(
+          name: name,
+          kind: AttributeInputKind.multilineString,
+          mandatory: mandatory,
+        );
       default:
-        return ParsedAttributeMeta(name: name, kind: AttributeInputKind.jsonBlob);
+        return ParsedAttributeMeta(
+          name: name,
+          kind: AttributeInputKind.jsonBlob,
+          mandatory: mandatory,
+        );
     }
   }
 
