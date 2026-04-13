@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'l10n/app_localizations.dart';
 import 'l10n/locale_controller.dart';
@@ -9,7 +10,11 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await themeController.load();
   await localeController.load();
-  runApp(const MyApp());
+  runApp(
+    const ProviderScope(
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
