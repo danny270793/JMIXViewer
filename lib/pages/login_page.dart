@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../api/jmix/jmix_api_exception.dart';
 import '../auth/foodie_session.dart';
+import '../logging/app_logger.dart';
 import '../l10n/app_localizations.dart';
 import '../router/app_router.dart';
 
@@ -18,6 +19,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _submitting = false;
 
   Future<void> _connect() async {
+    AppLogger.logUserAction('login.connect');
     FocusScope.of(context).unfocus();
     setState(() => _submitting = true);
     try {
