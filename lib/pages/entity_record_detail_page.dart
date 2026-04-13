@@ -21,10 +21,35 @@ class EntityRecordDetailArgs {
   const EntityRecordDetailArgs({
     required this.entityName,
     required this.row,
+    this.isCreate = false,
   });
 
   final String entityName;
   final Map<String, dynamic> row;
+
+  /// When true, the page opens an empty form and [createEntity] on save.
+  final bool isCreate;
+}
+
+/// Property names suitable for a create form (excludes id, version, read-only, instance name).
+List<String> _entityCreateFormKeysFromMetadata(
+  Map<String, dynamic> entityMetadata,
+  String entityName,
+  Map<String, dynamic> allEntityMessages,
+) {
+  final names = entityMetadataPropertyNamesSorted(
+    entityMetadata,
+    entityName,
+    allEntityMessages,
+    null,
+  );
+  final props = ParsedAttributeMeta.propertyMapFromEntityMeta(entityMetadata);
+  final rest = entityRecordRestKeys(names);
+  return [
+    for (final k in rest)
+      if (k != 'id' && k != 'version')
+        if (props[k] == null || props[k]!['readOnly'] != true) k,
+  ];
 }
 
 String? _entityIdForRestPath(Map<String, dynamic> row) {
@@ -170,6 +195,9 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
   bool _deleting = false;
   /// True after a successful save; passed to [HomePage] on pop to refresh the list.
   bool _entitySavedSuccessfully = false;
+  bool _createPreparing = false;
+  String? _createPrepareError;
+  List<String>? _createOrderedKeys;
   final Map<String, TextEditingController> _controllers = {};
   final Map<String, bool?> _boolValues = {};
   final Map<String, String?> _enumValues = {};
@@ -179,6 +207,10 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
   void initState() {
     super.initState();
     _row = Map<String, dynamic>.from(widget.args.row);
+    if (widget.args.isCreate) {
+      _createPreparing = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _prepareCreateMode());
+    }
   }
 
   @override
@@ -249,7 +281,121 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
     });
   }
 
+  Future<void> _prepareCreateMode() async {
+    try {
+      final metaJson =
+          await ref.read(entityMetadataProvider(widget.args.entityName).future);
+      final props = ParsedAttributeMeta.propertyMapFromEntityMeta(metaJson);
+      final messages = ref.read(drawerEntitiesProvider).maybeWhen(
+            data: (d) => d.messages,
+            orElse: () => <String, dynamic>{},
+          );
+      final keys = _entityCreateFormKeysFromMetadata(
+        metaJson,
+        widget.args.entityName,
+        messages,
+      );
+      if (!mounted) return;
+      _createOrderedKeys = keys;
+      _disposeControllers();
+      _propertyByName = props;
+      for (final k in keys) {
+        final m = ParsedAttributeMeta.forField(
+          fieldName: k,
+          property: props[k],
+          currentValue: _row[k],
+          entityMetadataAvailable: true,
+        );
+        if (k == 'id' || m.kind == AttributeInputKind.readOnlyDisplay) {
+          continue;
+        }
+        if (m.kind == AttributeInputKind.boolean) {
+          _boolValues[k] = null;
+        } else if (m.kind == AttributeInputKind.enumDropdown) {
+          _enumValues[k] = null;
+        } else {
+          _controllers[k] = TextEditingController(text: '');
+        }
+      }
+      if (!mounted) return;
+      setState(() {
+        _createPreparing = false;
+        _createPrepareError = null;
+        _editing = true;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _createPreparing = false;
+        _createPrepareError = '$e';
+      });
+    }
+  }
+
+  Future<void> _submitCreate(List<String> keys, AppLocalizations l10n) async {
+    setState(() => _saving = true);
+    try {
+      final body = <String, dynamic>{};
+      for (final k in keys) {
+        try {
+          final meta = _metaFor(k);
+          if (meta.kind == AttributeInputKind.readOnlyDisplay) {
+            continue;
+          }
+          final original = _row[k];
+          final c = _controllers[k];
+          final text = c?.text ?? '';
+          final parsed = _parseEditableValue(
+            meta: meta,
+            original: original,
+            text: text,
+            boolValue: _boolValues[k],
+            enumValue: _enumValues[k],
+          );
+          if (parsed != null) {
+            body[k] = parsed;
+          }
+        } catch (_) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.entityRecordFieldInvalid(k))),
+          );
+          return;
+        }
+      }
+
+      await BusinessOps.run(
+        'entityRecord.create',
+        () => ref.read(jmixRestConnectorProvider).createEntity(
+              widget.args.entityName,
+              body,
+            ),
+      );
+      if (!mounted) return;
+
+      _entitySavedSuccessfully = true;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.entityRecordCreateSuccess)),
+      );
+      context.pop(true);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.entityRecordSaveFailed('$e'))),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
+    }
+  }
+
   Future<void> _save(List<String> keys, AppLocalizations l10n) async {
+    if (widget.args.isCreate) {
+      await _submitCreate(keys, l10n);
+      return;
+    }
+
     final entityId = _entityIdForRestPath(_row);
     if (entityId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -529,89 +675,160 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
           orElse: () => <String, dynamic>{},
         );
 
-    // Warm cache so Edit can classify fields without waiting.
     ref.watch(entityMetadataProvider(widget.args.entityName));
 
-    final orderedKeys = entityRowColumnKeysSortedByDisplay(
-      [_row],
-      widget.args.entityName,
-      messages,
-      null,
-    );
+    final displayName = sidebarLabel(widget.args.entityName, messages);
+
+    Widget popScopeWrapper({required Widget child}) => PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (bool didPop, Object? result) {
+            if (didPop) return;
+            if (!context.mounted) return;
+            context.pop(_entitySavedSuccessfully);
+          },
+          child: child,
+        );
+
+    if (widget.args.isCreate && _createPreparing) {
+      return popScopeWrapper(
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(l10n.entityRecordCreateTitle(displayName)),
+          ),
+          body: const Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+
+    if (widget.args.isCreate && _createPrepareError != null) {
+      return popScopeWrapper(
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(l10n.entityRecordCreateTitle(displayName)),
+          ),
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    l10n.entityRecordCreatePrepareFailed(_createPrepareError!),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton(
+                    onPressed: () => context.pop(false),
+                    child: Text(l10n.entityRecordCancel),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final orderedKeys = widget.args.isCreate
+        ? (_createOrderedKeys ?? const <String>[])
+        : entityRowColumnKeysSortedByDisplay(
+            [_row],
+            widget.args.entityName,
+            messages,
+            null,
+          );
 
     final sections = EntityRecordFieldSections.partition(orderedKeys);
 
-    final title = EntityRecordCollapseTitles.titleText(_row, orderedKeys);
+    final title = widget.args.isCreate
+        ? l10n.entityRecordCreateTitle(displayName)
+        : EntityRecordCollapseTitles.titleText(_row, orderedKeys);
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (bool didPop, Object? result) {
-        if (didPop) return;
-        if (!context.mounted) return;
-        context.pop(_entitySavedSuccessfully);
-      },
-      child: Scaffold(
-      appBar: AppBar(
-        title: Text(
-          title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+    final listChildren = <Widget>[
+      if (widget.args.isCreate && orderedKeys.isEmpty)
+        Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            l10n.entityRecordCreateNoFields,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        )
+      else
+        ..._sectionedAttributeColumns(
+          sections,
+          theme,
+          colorScheme,
+          messages,
         ),
-        actions: [
-          if (!_editing) ...[
-            if (_entityIdForRestPath(_row) != null)
+    ];
+
+    return popScopeWrapper(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          actions: [
+            if (!widget.args.isCreate && !_editing) ...[
+              if (_entityIdForRestPath(_row) != null)
+                IconButton(
+                  icon: _deleting
+                      ? SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: colorScheme.onSurface,
+                          ),
+                        )
+                      : const Icon(Icons.delete_outline),
+                  tooltip: l10n.entityRecordDeleteTooltip,
+                  onPressed: (_saving || _deleting)
+                      ? null
+                      : () => _confirmDelete(l10n),
+                ),
               IconButton(
-                icon: _deleting
-                    ? SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: colorScheme.onSurface,
-                        ),
-                      )
-                    : const Icon(Icons.delete_outline),
-                tooltip: l10n.entityRecordDeleteTooltip,
+                icon: const Icon(Icons.edit),
+                tooltip: l10n.entityRecordEdit,
                 onPressed: (_saving || _deleting)
                     ? null
-                    : () => _confirmDelete(l10n),
+                    : () => _startEdit(orderedKeys),
               ),
-            IconButton(
-              icon: const Icon(Icons.edit),
-              tooltip: l10n.entityRecordEdit,
-              onPressed: (_saving || _deleting)
-                  ? null
-                  : () => _startEdit(orderedKeys),
-            ),
-          ] else ...[
-            TextButton(
-              onPressed: _saving ? null : _exitEdit,
-              child: Text(l10n.entityRecordCancel),
-            ),
-            IconButton(
-              icon: const Icon(Icons.save),
-              tooltip: l10n.entityRecordSave,
-              onPressed: _saving ? null : () => _save(orderedKeys, l10n),
-            ),
-          ],
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _onPullRefresh,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-          children: [
-            ..._sectionedAttributeColumns(
-              sections,
-              theme,
-              colorScheme,
-              messages,
-            ),
+            ] else if (_editing) ...[
+              TextButton(
+                onPressed: _saving
+                    ? null
+                    : widget.args.isCreate
+                        ? () => context.pop(false)
+                        : _exitEdit,
+                child: Text(l10n.entityRecordCancel),
+              ),
+              IconButton(
+                icon: const Icon(Icons.save),
+                tooltip: l10n.entityRecordSave,
+                onPressed: _saving ||
+                        (widget.args.isCreate && orderedKeys.isEmpty)
+                    ? null
+                    : () => _save(orderedKeys, l10n),
+              ),
+            ],
           ],
         ),
+        body: RefreshIndicator(
+          onRefresh:
+              widget.args.isCreate ? () async {} : _onPullRefresh,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+            children: listChildren,
+          ),
+        ),
       ),
-    ),
     );
   }
 }
