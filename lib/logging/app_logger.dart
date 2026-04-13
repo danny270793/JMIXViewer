@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
@@ -34,16 +36,56 @@ abstract final class AppLogger {
   }
 
   /// Logs a completed Dio call: status, duration, method, full URI (debug only).
+  /// For POST/PUT/PATCH, logs [requestBody] on the following line(s) when non-null.
   static void logHttpCompleted({
     required int? statusCode,
     required int elapsedMs,
     required String method,
     required Uri uri,
+    Object? requestBody,
   }) {
     if (!kDebugMode) return;
     final m = method.toUpperCase();
     final code = statusCode?.toString() ?? '—';
     _emit('[HTTP] $code ${elapsedMs}ms $m $uri');
+    if (requestBody != null &&
+        (m == 'POST' || m == 'PUT' || m == 'PATCH')) {
+      final formatted = _formatHttpRequestBodyForLog(requestBody);
+      if (formatted.isNotEmpty) {
+        _emit('[HTTP] body:\n$formatted');
+      }
+    }
+  }
+
+  static String _formatHttpRequestBodyForLog(Object data) {
+    try {
+      if (data is String) {
+        return _truncateHttpLog(data);
+      }
+      if (data is Map || data is List) {
+        return _truncateHttpLog(
+          const JsonEncoder.withIndent('  ').convert(data),
+        );
+      }
+      if (data is FormData) {
+        final buf = StringBuffer();
+        for (final e in data.fields) {
+          buf.writeln('${e.key}: ${e.value}');
+        }
+        if (data.files.isNotEmpty) {
+          buf.writeln('(${data.files.length} file(s))');
+        }
+        return _truncateHttpLog(buf.isEmpty ? '(empty FormData)' : buf.toString());
+      }
+      return _truncateHttpLog(data.toString());
+    } catch (e) {
+      return _truncateHttpLog('<body log error: $e>');
+    }
+  }
+
+  static String _truncateHttpLog(String s, [int maxChars = 32000]) {
+    if (s.length <= maxChars) return s;
+    return '${s.substring(0, maxChars)}… (${s.length} chars total)';
   }
 
   /// Logs a navigation event: [type] (push, pop, replace, remove) and path from → to.
@@ -96,6 +138,7 @@ final class HttpRequestUrlInterceptor extends Interceptor {
       elapsedMs: ms,
       method: options.method,
       uri: options.uri,
+      requestBody: options.data,
     );
   }
 }
