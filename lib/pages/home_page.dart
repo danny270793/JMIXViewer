@@ -4,11 +4,12 @@ import 'package:go_router/go_router.dart';
 
 import '../business/jmix/entity_list_pagination.dart';
 import '../business/jmix/entity_messages_labels.dart';
+import '../business/jmix/entity_record_collapse_titles.dart';
 import '../l10n/app_localizations.dart';
 import '../logging/app_logger.dart';
 import '../providers/home_providers.dart';
 import '../router/app_router.dart';
-import '../widgets/entity_record_expansion_tile.dart';
+import 'entity_record_detail_page.dart';
 
 /// Shown after a successful Foodie / Jmix sign-in.
 class HomePage extends ConsumerWidget {
@@ -371,14 +372,29 @@ class _InfiniteEntityListViewState extends ConsumerState<_InfiniteEntityListView
                   ),
                 );
               }
-              return EntityRecordExpansionTile(
-                row: items[index],
-                orderedColumnKeys: keys,
-                theme: widget.theme,
-                colorScheme: widget.colorScheme,
-                entityName: widget.entityName,
-                allEntityMessages: widget.drawerMessages,
-                fieldMessagesForEntity: null,
+              final row = items[index];
+              return ListTile(
+                title: Tooltip(
+                  message: EntityRecordCollapseTitles.titleTooltip(row, keys),
+                  child: Text(
+                    EntityRecordCollapseTitles.titleText(row, keys),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                trailing: Icon(
+                  Icons.chevron_right,
+                  color: widget.colorScheme.onSurfaceVariant,
+                ),
+                onTap: () {
+                  context.push(
+                    AppRoutes.entityRecord,
+                    extra: EntityRecordDetailArgs(
+                      entityName: widget.entityName,
+                      row: Map<String, dynamic>.from(row),
+                    ),
+                  );
+                },
               );
             },
           ),
