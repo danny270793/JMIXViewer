@@ -417,14 +417,18 @@ class _InfiniteEntityListViewState extends ConsumerState<_InfiniteEntityListView
                   Icons.chevron_right,
                   color: widget.colorScheme.onSurfaceVariant,
                 ),
-                onTap: () {
-                  context.push(
+                onTap: () async {
+                  final recordWasSaved = await context.push<bool>(
                     AppRoutes.entityRecord,
                     extra: EntityRecordDetailArgs(
                       entityName: widget.entityName,
                       row: Map<String, dynamic>.from(row),
                     ),
                   );
+                  if (!context.mounted) return;
+                  if (recordWasSaved == true) {
+                    await ref.read(entityListProvider.notifier).refresh();
+                  }
                 },
               );
             },
