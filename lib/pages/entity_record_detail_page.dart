@@ -706,7 +706,8 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
           orElse: () => <String, dynamic>{},
         );
 
-    ref.watch(entityMetadataProvider(widget.args.entityName));
+    final entityMetaAsync =
+        ref.watch(entityMetadataProvider(widget.args.entityName));
 
     final displayName = sidebarLabel(widget.args.entityName, messages);
 
@@ -760,7 +761,13 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
       );
     }
 
-    final orderedKeys = widget.args.isCreate
+    final propertyMapForSort = _propertyByName ??
+        entityMetaAsync.maybeWhen(
+          data: ParsedAttributeMeta.propertyMapFromEntityMeta,
+          orElse: () => null,
+        );
+
+    final orderedKeysRaw = widget.args.isCreate
         ? (_createOrderedKeys ?? const <String>[])
         : entityRowColumnKeysSortedByDisplay(
             [_row],
@@ -768,6 +775,11 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
             messages,
             null,
           );
+
+    final orderedKeys = ParsedAttributeMeta.sortFieldKeysMandatoryFirst(
+      orderedKeysRaw,
+      propertyMapForSort,
+    );
 
     final sections = EntityRecordFieldSections.partition(orderedKeys);
 
