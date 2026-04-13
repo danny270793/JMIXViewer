@@ -15,7 +15,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Welcome back'), findsOneWidget);
-    expect(find.byType(TextFormField), findsNWidgets(2));
+    expect(find.text('Connect to Foodie'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsNothing);
   });
 }
