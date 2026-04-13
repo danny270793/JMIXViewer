@@ -5,7 +5,6 @@ import '../api/jmix/jmix_rest_connector.dart';
 import '../api/jmix/models/jmix_entity_list_result.dart';
 import '../application/use_cases/jmix/load_drawer_entities_use_case.dart';
 import '../application/use_cases/jmix/load_entity_list_page_use_case.dart';
-import '../application/use_cases/jmix/load_field_messages_for_entity_use_case.dart';
 import '../auth/foodie_session.dart';
 import '../domain/jmix/drawer_entities_result.dart';
 import '../logging/app_logger.dart';
@@ -18,11 +17,6 @@ final jmixRestConnectorProvider = Provider<JmixRestConnector>((ref) {
 final loadDrawerEntitiesUseCaseProvider =
     Provider<LoadDrawerEntitiesUseCase>((ref) {
   return LoadDrawerEntitiesUseCase(ref.watch(jmixRestConnectorProvider));
-});
-
-final loadFieldMessagesForEntityUseCaseProvider =
-    Provider<LoadFieldMessagesForEntityUseCase>((ref) {
-  return LoadFieldMessagesForEntityUseCase(ref.watch(jmixRestConnectorProvider));
 });
 
 final loadEntityListPageUseCaseProvider =
@@ -70,16 +64,6 @@ class HomeSelectionNotifier extends Notifier<HomeSelection> {
     );
   }
 }
-
-/// Per-entity field messages; only refetches when [HomeSelection.selectedEntityName] changes.
-final fieldMessagesForSelectionProvider =
-    FutureProvider<Map<String, dynamic>>((ref) async {
-  final name = ref.watch(
-    homeSelectionProvider.select((s) => s.selectedEntityName),
-  );
-  if (name == null) return {};
-  return ref.read(loadFieldMessagesForEntityUseCaseProvider)(name);
-});
 
 /// Paginated entity rows for the current [HomeSelection].
 final entityListProvider =
