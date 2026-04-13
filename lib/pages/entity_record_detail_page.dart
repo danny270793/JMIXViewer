@@ -427,20 +427,32 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
     void addSection(String sectionTitle, List<String> keys) {
       if (keys.isEmpty) return;
       if (!firstSection) {
-        out.add(const SizedBox(height: 28));
+        out.add(const SizedBox(height: 16));
       }
       firstSection = false;
       out.add(
-        Text(
-          sectionTitle,
-          style: theme.textTheme.titleMedium?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w600,
+        Card(
+          margin: EdgeInsets.zero,
+          clipBehavior: Clip.antiAlias,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  sectionTitle,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ..._attributeRowsForKeys(keys, theme, colorScheme, messages),
+              ],
+            ),
           ),
         ),
       );
-      out.add(const SizedBox(height: 12));
-      out.addAll(_attributeRowsForKeys(keys, theme, colorScheme, messages));
     }
 
     addSection('Framework', sections.framework);
