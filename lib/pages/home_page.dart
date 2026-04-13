@@ -467,7 +467,7 @@ class _EntityRecordTile extends StatelessWidget {
                   for (var i = 0; i < restKeys.length; i++) ...[
                     if (i > 0) const SizedBox(height: 14),
                     Text(
-                      '*${restKeys[i]}*',
+                      restKeys[i],
                       style: theme.textTheme.labelLarge?.copyWith(
                         color: colorScheme.primary,
                         fontWeight: FontWeight.w600,
