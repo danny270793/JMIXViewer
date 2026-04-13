@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../business/business_ops.dart';
@@ -164,6 +165,8 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
   late Map<String, dynamic> _row;
   bool _editing = false;
   bool _saving = false;
+  /// True after a successful save; passed to [HomePage] on pop to refresh the list.
+  bool _entitySavedSuccessfully = false;
   final Map<String, TextEditingController> _controllers = {};
   final Map<String, bool> _boolValues = {};
   final Map<String, String?> _enumValues = {};
@@ -318,6 +321,7 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
         _row = refreshed;
         _editing = false;
         _propertyByName = null;
+        _entitySavedSuccessfully = true;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.entityRecordSaveSuccess)),
@@ -388,7 +392,14 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
 
     final title = EntityRecordCollapseTitles.titleText(_row, orderedKeys);
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        if (didPop) return;
+        if (!context.mounted) return;
+        context.pop(_entitySavedSuccessfully);
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: Text(
           title,
@@ -465,6 +476,7 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
           ],
         ),
       ),
+    ),
     );
   }
 }
