@@ -576,6 +576,44 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
     }
   }
 
+  Widget _fieldLabelWithOptionalRequired({
+    required String fieldKey,
+    required ThemeData theme,
+    required ColorScheme colorScheme,
+    required Map<String, dynamic> messages,
+  }) {
+    final meta = _metaFor(fieldKey);
+    final label = attributeSidebarLabel(
+      fieldKey,
+      widget.args.entityName,
+      messages,
+      null,
+    );
+    final baseStyle = theme.textTheme.labelLarge?.copyWith(
+      color: colorScheme.primary,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.2,
+    );
+    final showRequired = _editing &&
+        meta.mandatory &&
+        meta.kind != AttributeInputKind.readOnlyDisplay;
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(text: label, style: baseStyle),
+          if (showRequired)
+            TextSpan(
+              text: ' *',
+              style: baseStyle?.copyWith(
+                color: colorScheme.error,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   List<Widget> _attributeRowsForKeys(
     List<String> keys,
     ThemeData theme,
@@ -585,18 +623,11 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
     return [
       for (var i = 0; i < keys.length; i++) ...[
         if (i > 0) const SizedBox(height: 20),
-        Text(
-          attributeSidebarLabel(
-            keys[i],
-            widget.args.entityName,
-            messages,
-            null,
-          ),
-          style: theme.textTheme.labelLarge?.copyWith(
-            color: colorScheme.primary,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.2,
-          ),
+        _fieldLabelWithOptionalRequired(
+          fieldKey: keys[i],
+          theme: theme,
+          colorScheme: colorScheme,
+          messages: messages,
         ),
         const SizedBox(height: 8),
         _AttributeEditor(
