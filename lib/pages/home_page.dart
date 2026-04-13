@@ -16,6 +16,25 @@ import 'entity_record_detail_page.dart';
 
 enum _HomeOverflowAction { search, sort, settings }
 
+Future<void> _openEntityCreate(
+  BuildContext context,
+  WidgetRef ref,
+  String entityName,
+) async {
+  final recordWasSaved = await context.push<bool>(
+    AppRoutes.entityRecord,
+    extra: EntityRecordDetailArgs(
+      entityName: entityName,
+      row: <String, dynamic>{},
+      isCreate: true,
+    ),
+  );
+  if (!context.mounted) return;
+  if (recordWasSaved == true) {
+    await ref.read(entityListProvider.notifier).refresh();
+  }
+}
+
 /// Shown after a successful Foodie / Jmix sign-in.
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -156,7 +175,16 @@ class HomePage extends ConsumerWidget {
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
-          if (selection.selectedEntityName != null)
+          if (selection.selectedEntityName != null) ...[
+            IconButton(
+              icon: const Icon(Icons.add),
+              tooltip: l10n.homeEntityListCreate,
+              onPressed: () => _openEntityCreate(
+                context,
+                ref,
+                selection.selectedEntityName!,
+              ),
+            ),
             PopupMenuButton<_HomeOverflowAction>(
               tooltip: l10n.homeAppBarMenuTooltip,
               icon: const Icon(Icons.more_vert),
@@ -213,8 +241,8 @@ class HomePage extends ConsumerWidget {
                   ),
                 ),
               ],
-            )
-          else
+            ),
+          ] else
             IconButton(
               icon: const Icon(Icons.settings_outlined),
               tooltip: l10n.settingsTooltip,
@@ -954,39 +982,9 @@ class _InfiniteEntityListViewState extends ConsumerState<_InfiniteEntityListView
 
     final extra = (accum.hasMore && accum.isLoadingMore) ? 1 : 0;
 
-    final l10n = AppLocalizations.of(context);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: FilledButton.tonalIcon(
-              icon: const Icon(Icons.add),
-              label: Text(l10n.homeEntityListCreate),
-              onPressed: () async {
-                final recordWasSaved = await context.push<bool>(
-                  AppRoutes.entityRecord,
-                  extra: EntityRecordDetailArgs(
-                    entityName: widget.entityName,
-                    row: <String, dynamic>{},
-                    isCreate: true,
-                  ),
-                );
-                if (!context.mounted) return;
-                if (recordWasSaved == true) {
-                  await ref.read(entityListProvider.notifier).refresh();
-                  if (mounted) {
-                    WidgetsBinding.instance
-                        .addPostFrameCallback((_) => _fillViewportIfNeeded());
-                  }
-                }
-              },
-            ),
-          ),
-        ),
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async {
