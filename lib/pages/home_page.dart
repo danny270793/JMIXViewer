@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../business/jmix/entity_list_pagination.dart';
 import '../business/jmix/entity_messages_labels.dart';
 import '../l10n/app_localizations.dart';
+import '../logging/app_logger.dart';
 import '../providers/home_providers.dart';
 import '../router/app_router.dart';
 import '../widgets/entity_record_expansion_tile.dart';
@@ -136,8 +137,9 @@ class HomePage extends ConsumerWidget {
         leading: selection.selectedEntityName != null
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
-                onPressed: () =>
-                    ref.read(homeSelectionProvider.notifier).clear(),
+                onPressed: () {
+              ref.read(homeSelectionProvider.notifier).clear();
+            },
               )
             : null,
         title: Text(
@@ -149,7 +151,10 @@ class HomePage extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: l10n.settingsTooltip,
-            onPressed: () => context.push(AppRoutes.settings),
+            onPressed: () {
+              AppLogger.logUserAction('home.openSettings');
+              context.push(AppRoutes.settings);
+            },
           ),
         ],
       ),
@@ -232,7 +237,10 @@ class HomePage extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               TextButton(
-                onPressed: () => ref.invalidate(entityListProvider),
+                onPressed: () {
+                  AppLogger.logUserAction('home.retryEntityList');
+                  ref.invalidate(entityListProvider);
+                },
                 child: const Text('Retry'),
               ),
             ],
