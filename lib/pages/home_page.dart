@@ -954,9 +954,39 @@ class _InfiniteEntityListViewState extends ConsumerState<_InfiniteEntityListView
 
     final extra = (accum.hasMore && accum.isLoadingMore) ? 1 : 0;
 
+    final l10n = AppLocalizations.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton.tonalIcon(
+              icon: const Icon(Icons.add),
+              label: Text(l10n.homeEntityListCreate),
+              onPressed: () async {
+                final recordWasSaved = await context.push<bool>(
+                  AppRoutes.entityRecord,
+                  extra: EntityRecordDetailArgs(
+                    entityName: widget.entityName,
+                    row: <String, dynamic>{},
+                    isCreate: true,
+                  ),
+                );
+                if (!context.mounted) return;
+                if (recordWasSaved == true) {
+                  await ref.read(entityListProvider.notifier).refresh();
+                  if (mounted) {
+                    WidgetsBinding.instance
+                        .addPostFrameCallback((_) => _fillViewportIfNeeded());
+                  }
+                }
+              },
+            ),
+          ),
+        ),
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async {
