@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../api/jmix/jmix_api_exception.dart';
-import '../auth/foodie_session.dart';
 import '../logging/app_logger.dart';
 import '../l10n/app_localizations.dart';
+import '../providers/auth_providers.dart';
 import '../router/app_router.dart';
 
 /// Obtains an access token via OAuth2 client credentials, then navigates home.
-class LoginPage extends StatefulWidget {
+class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  ConsumerState<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends ConsumerState<LoginPage> {
   bool _submitting = false;
 
   Future<void> _connect() async {
@@ -23,7 +24,7 @@ class _LoginPageState extends State<LoginPage> {
     FocusScope.of(context).unfocus();
     setState(() => _submitting = true);
     try {
-      await FoodieSession.instance.signInWithClientCredentials();
+      await ref.read(signInWithClientCredentialsUseCaseProvider)();
       if (!mounted) return;
       context.go(AppRoutes.home);
     } on JmixApiException catch (e) {
