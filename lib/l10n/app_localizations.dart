@@ -518,6 +518,36 @@ abstract class AppLocalizations {
   /// **'Loading fields…'**
   String get homeEntityListSearchLoadingFields;
 
+  /// No description provided for @entityRecordCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New {name}'**
+  String entityRecordCreateTitle(String name);
+
+  /// No description provided for @entityRecordCreateSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Record created.'**
+  String get entityRecordCreateSuccess;
+
+  /// No description provided for @entityRecordCreateNoFields.
+  ///
+  /// In en, this message translates to:
+  /// **'No creatable fields are defined for this entity.'**
+  String get entityRecordCreateNoFields;
+
+  /// No description provided for @entityRecordCreatePrepareFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load the form: {error}'**
+  String entityRecordCreatePrepareFailed(String error);
+
+  /// No description provided for @homeEntityListCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get homeEntityListCreate;
+
   /// No description provided for @homeAppBarMenuTooltip.
   ///
   /// In en, this message translates to:
