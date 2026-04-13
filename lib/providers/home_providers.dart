@@ -6,6 +6,7 @@ import '../application/use_cases/jmix/load_drawer_entities_use_case.dart';
 import '../application/use_cases/jmix/load_entity_list_page_use_case.dart';
 import '../auth/foodie_session.dart';
 import '../business/jmix/entity_list_pagination.dart';
+import '../business/jmix/entity_messages_labels.dart';
 import '../domain/jmix/drawer_entities_result.dart';
 import '../logging/app_logger.dart';
 
@@ -56,6 +57,56 @@ class HomeSelectionNotifier extends Notifier<HomeSelection> {
   }
 }
 
+/// User-chosen sort for the generic entity list (`GET entities/{name}` `sort` query).
+@immutable
+class EntityListSort {
+  const EntityListSort({
+    required this.fieldKey,
+    required this.ascending,
+  });
+
+  final String fieldKey;
+  final bool ascending;
+
+  /// Jmix REST: ascending uses the attribute name; descending prefixes `-`.
+  String get jmixSortParameter => ascending ? fieldKey : '-$fieldKey';
+}
+
+final entityListSortProvider =
+    NotifierProvider<EntityListSortNotifier, EntityListSort?>(
+  EntityListSortNotifier.new,
+);
+
+class EntityListSortNotifier extends Notifier<EntityListSort?> {
+  @override
+  EntityListSort? build() {
+    ref.listen<HomeSelection>(
+      homeSelectionProvider,
+      (previous, next) {
+        if (previous?.selectedEntityName != next.selectedEntityName) {
+          state = null;
+        }
+      },
+    );
+    return null;
+  }
+
+  void apply(EntityListSort value) {
+    AppLogger.logUserAction(
+      'home.entityList.sort',
+      '${value.fieldKey} ${value.ascending ? 'asc' : 'desc'}',
+    );
+    state = value;
+    ref.read(entityListProvider.notifier).refresh();
+  }
+
+  void clear() {
+    AppLogger.logUserAction('home.entityList.sort', 'default');
+    state = null;
+    ref.read(entityListProvider.notifier).refresh();
+  }
+}
+
 /// First page + appended pages for infinite scroll when an entity is selected.
 @immutable
 class AccumulatedEntityList {
@@ -96,13 +147,45 @@ final entityListProvider =
   EntityListNotifier.new,
 );
 
+/// Avoids calling metadata on every page; keyed by entity name.
+final Map<String, bool> _entityHasCreatedDateForSortCache = {};
+
+Future<String?> _effectiveEntityListSortQuery(Ref ref, String entityName) async {
+  final explicit = ref.read(entityListSortProvider);
+  if (explicit != null) return explicit.jmixSortParameter;
+
+  if (_entityHasCreatedDateForSortCache.containsKey(entityName)) {
+    final has = _entityHasCreatedDateForSortCache[entityName]!;
+    return has
+        ? const EntityListSort(fieldKey: 'createdDate', ascending: false)
+            .jmixSortParameter
+        : null;
+  }
+
+  try {
+    final meta =
+        await ref.read(jmixRestConnectorProvider).metadataGetEntity(entityName);
+    final has = entityMetadataHasProperty(meta, 'createdDate');
+    _entityHasCreatedDateForSortCache[entityName] = has;
+    return has
+        ? const EntityListSort(fieldKey: 'createdDate', ascending: false)
+            .jmixSortParameter
+        : null;
+  } catch (_) {
+    _entityHasCreatedDateForSortCache[entityName] = false;
+    return null;
+  }
+}
+
 Future<AccumulatedEntityList?> _loadEntityListFirstPage(
   Ref ref,
   String entityName,
 ) async {
+  final sort = await _effectiveEntityListSortQuery(ref, entityName);
   final result = await ref.read(loadEntityListPageUseCaseProvider)(
     entityName: entityName,
     pageIndex: 0,
+    sort: sort,
   );
   if (result == null) return null;
 
@@ -165,9 +248,11 @@ class EntityListNotifier extends AsyncNotifier<AccumulatedEntityList?> {
       }
 
       final pageIndex = current.nextPageIndex;
+      final sort = await _effectiveEntityListSortQuery(ref, name);
       final result = await ref.read(loadEntityListPageUseCaseProvider)(
         entityName: name,
         pageIndex: pageIndex,
+        sort: sort,
       );
       if (result == null) {
         state = AsyncValue.data(
