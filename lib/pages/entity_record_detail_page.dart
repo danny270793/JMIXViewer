@@ -252,39 +252,51 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
       return;
     }
 
-    final body = <String, dynamic>{};
-    for (final k in keys) {
-      try {
-        final meta = _metaFor(k);
-        if (k == 'id') {
-          body[k] = _row[k];
-          continue;
-        }
-        if (meta.kind == AttributeInputKind.readOnlyDisplay) {
-          body[k] = _row[k];
-          continue;
-        }
-        final original = _row[k];
-        final c = _controllers[k];
-        final text = c?.text ?? '';
-        body[k] = _parseEditableValue(
-          meta: meta,
-          original: original,
-          text: text,
-          boolValue: _boolValues[k],
-          enumValue: _enumValues[k],
-        );
-      } catch (_) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.entityRecordFieldInvalid(k))),
-        );
-        return;
-      }
-    }
-
     setState(() => _saving = true);
     try {
+      final latest = await BusinessOps.run(
+        'entityRecord.loadBeforeUpdate',
+        () => ref.read(jmixRestConnectorProvider).loadEntity(
+              widget.args.entityName,
+              entityId,
+            ),
+      );
+
+      final body = <String, dynamic>{};
+      for (final k in keys) {
+        try {
+          final meta = _metaFor(k);
+          if (k == 'id') {
+            body[k] = latest[k] ?? _row[k];
+            continue;
+          }
+          if (meta.kind == AttributeInputKind.readOnlyDisplay) {
+            body[k] = latest[k] ?? _row[k];
+            continue;
+          }
+          final original = _row[k];
+          final c = _controllers[k];
+          final text = c?.text ?? '';
+          body[k] = _parseEditableValue(
+            meta: meta,
+            original: original,
+            text: text,
+            boolValue: _boolValues[k],
+            enumValue: _enumValues[k],
+          );
+        } catch (_) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.entityRecordFieldInvalid(k))),
+          );
+          return;
+        }
+      }
+
+      if (latest.containsKey('version')) {
+        body['version'] = latest['version'];
+      }
+
       final updated = await BusinessOps.run(
         'entityRecord.update',
         () => ref.read(jmixRestConnectorProvider).updateEntity(
