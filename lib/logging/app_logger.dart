@@ -1,7 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
-/// Debug-only logging. No output in profile or release builds.
+/// Debug-only logging for most channels. Business operation failures can also
+/// be forwarded via `BusinessOps.onError` in `business_ops.dart`.
 abstract final class AppLogger {
   AppLogger._();
 
@@ -9,6 +10,27 @@ abstract final class AppLogger {
     if (kDebugMode) {
       debugPrint(message);
     }
+  }
+
+  /// Business operation started (debug only). Pair with [logBusinessDone].
+  static void logBusinessStart(String name) {
+    if (!kDebugMode) return;
+    _emit('[BIZ] -> $name');
+  }
+
+  /// Business operation finished (debug only).
+  static void logBusinessDone(String name, Duration elapsed) {
+    if (!kDebugMode) return;
+    final ms = elapsed.inMilliseconds;
+    _emit('[BIZ] <- $name (${ms}ms)');
+  }
+
+  /// Uncaught failure inside [BusinessOps]. Debug: full message + stack.
+  /// Also use [BusinessOps.onError] for release crash reporting.
+  static void logBusinessError(String name, Object error, StackTrace stack) {
+    if (!kDebugMode) return;
+    _emit('[BIZ] !! $name: $error');
+    _emit(stack.toString());
   }
 
   /// Logs the resolved URL for an outgoing Dio request (method + full URI).
