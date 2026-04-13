@@ -455,9 +455,9 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
       );
     }
 
-    addSection('Framework', sections.framework);
-    addSection('Soft delete', sections.softDelete);
     addSection('Application', sections.application);
+    addSection('Soft delete', sections.softDelete);
+    addSection('Framework', sections.framework);
     return out;
   }
 
