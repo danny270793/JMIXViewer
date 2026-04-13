@@ -2,22 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'l10n/app_localizations.dart';
-import 'l10n/locale_controller.dart';
+import 'providers/app_settings_providers.dart';
 import 'router/app_router.dart';
-import 'theme/theme_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await themeController.load();
-  await localeController.load();
+  final container = ProviderContainer();
+  await container.read(themeModeProvider.notifier).load();
+  await container.read(localePreferenceProvider.notifier).load();
   runApp(
-    const ProviderScope(
-      child: MyApp(),
+    UncontrolledProviderScope(
+      container: container,
+      child: const MyApp(),
     ),
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   static ThemeData _lightTheme() {
@@ -38,23 +39,20 @@ class MyApp extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: Listenable.merge([themeController, localeController]),
-      builder: (context, _) {
-        return MaterialApp.router(
-          onGenerateTitle: (context) =>
-              AppLocalizations.of(context).appTitle,
-          debugShowCheckedModeBanner: false,
-          routerConfig: appRouter,
-          locale: localeController.appLocale,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          themeMode: themeController.themeMode,
-          theme: _lightTheme(),
-          darkTheme: _darkTheme(),
-        );
-      },
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+    final locale = ref.watch(appLocaleProvider);
+
+    return MaterialApp.router(
+      onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
+      debugShowCheckedModeBanner: false,
+      routerConfig: appRouter,
+      locale: locale,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      themeMode: themeMode,
+      theme: _lightTheme(),
+      darkTheme: _darkTheme(),
     );
   }
 }
