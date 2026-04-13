@@ -98,5 +98,24 @@
   "homeEntityListSearchClear": "Clear search",
   "homeEntityListSearchApply": "Apply",
   "homeEntityListSearchLoadingFields": "Loading fields…",
+  "entityRecordCreateTitle": "New {name}",
+  "@entityRecordCreateTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "entityRecordCreateSuccess": "Record created.",
+  "entityRecordCreateNoFields": "No creatable fields are defined for this entity.",
+  "entityRecordCreatePrepareFailed": "Could not load the form: {error}",
+  "@entityRecordCreatePrepareFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "homeEntityListCreate": "Create",
   "homeAppBarMenuTooltip": "More options"
 }
