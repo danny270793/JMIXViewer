@@ -134,14 +134,6 @@ class HomePage extends ConsumerWidget {
         ),
       ),
       appBar: AppBar(
-        leading: selection.selectedEntityName != null
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () {
-                  ref.read(homeSelectionProvider.notifier).clear();
-                },
-              )
-            : null,
         title: Text(
           selection.selectedEntityName ?? l10n.homeTitle,
           maxLines: 1,
