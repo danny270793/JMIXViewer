@@ -235,5 +235,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeEntityListSearchLoadingFields => 'Loading fields…';
 
   @override
+  String entityRecordCreateTitle(String name) {
+    return 'New $name';
+  }
+
+  @override
+  String get entityRecordCreateSuccess => 'Record created.';
+
+  @override
+  String get entityRecordCreateNoFields =>
+      'No creatable fields are defined for this entity.';
+
+  @override
+  String entityRecordCreatePrepareFailed(String error) {
+    return 'Could not load the form: $error';
+  }
+
+  @override
+  String get homeEntityListCreate => 'Create';
+
+  @override
   String get homeAppBarMenuTooltip => 'More options';
 }
