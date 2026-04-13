@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../pages/entity_record_detail_page.dart';
 import '../pages/home_page.dart';
 import '../pages/login_page.dart';
 import '../pages/settings_page.dart';
@@ -13,6 +14,7 @@ abstract final class AppRoutes {
   static const login = '/login';
   static const home = '/home';
   static const settings = '/settings';
+  static const entityRecord = '/entity-record';
 }
 
 /// Shared app router (single source of truth for navigation).
@@ -39,6 +41,20 @@ final GoRouter appRouter = GoRouter(
       path: AppRoutes.settings,
       builder: (BuildContext context, GoRouterState state) =>
           const SettingsPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.entityRecord,
+      builder: (BuildContext context, GoRouterState state) {
+        final extra = state.extra;
+        final args = extra is EntityRecordDetailArgs ? extra : null;
+        if (args == null) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Record')),
+            body: const Center(child: Text('Missing record data')),
+          );
+        }
+        return EntityRecordDetailPage(args: args);
+      },
     ),
   ],
 );
