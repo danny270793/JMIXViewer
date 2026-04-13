@@ -236,4 +236,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get homeEntityListSearchLoadingFields => 'Cargando campos…';
+
+  @override
+  String get homeAppBarMenuTooltip => 'Más opciones';
 }
