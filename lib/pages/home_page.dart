@@ -305,7 +305,7 @@ class _HomePageState extends State<HomePage> {
                 itemCount: items.length,
                 separatorBuilder: (_, _) => const Divider(height: 1),
                 itemBuilder: (context, index) {
-                  return _EntityRecordCard(
+                  return _EntityRecordTile(
                     row: items[index],
                     keys: keys,
                     theme: theme,
@@ -351,7 +351,7 @@ class _HomePageState extends State<HomePage> {
     return keys.toList()..sort();
   }
 
-  /// Shortened for card display (long JSON still truncated).
+  /// Shortened for list rows (long JSON still truncated).
   String _cellText(dynamic value) {
     if (value == null) return '—';
     if (value is String) return value;
@@ -388,8 +388,8 @@ class _HomePageState extends State<HomePage> {
 /// Jmix entity JSON often includes `_instanceName` for display in lists.
 const String _kInstanceNameField = '_instanceName';
 
-class _EntityRecordCard extends StatelessWidget {
-  const _EntityRecordCard({
+class _EntityRecordTile extends StatelessWidget {
+  const _EntityRecordTile({
     required this.row,
     required this.keys,
     required this.theme,
@@ -429,79 +429,69 @@ class _EntityRecordCard extends StatelessWidget {
     final restKeys =
         keys.where((k) => k != _kInstanceNameField).toList(growable: false);
 
-    return Card(
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Theme(
-        data: theme.copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          maintainState: true,
-          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
-          title: Tooltip(
-            message: _collapsedTitleTooltip(),
-            child: Text(
-              _collapsedTitleText(),
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: colorScheme.onSurface,
-                fontWeight: FontWeight.w500,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+    return Theme(
+      data: theme.copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        maintainState: true,
+        tilePadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+        expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
+        title: Tooltip(
+          message: _collapsedTitleTooltip(),
+          child: Text(
+            _collapsedTitleText(),
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: colorScheme.onSurface,
+              fontWeight: FontWeight.w500,
             ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
-          children: [
-            if (restKeys.isEmpty)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: Text(
-                  'No other fields',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              )
-            else
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    for (var i = 0; i < restKeys.length; i++) ...[
-                      if (i > 0) const SizedBox(height: 14),
-                      Text(
-                        restKeys[i],
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          color: colorScheme.primary,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Tooltip(
-                        message: fullValue(row[restKeys[i]]),
-                        child: Text(
-                          displayValue(row[restKeys[i]]),
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: colorScheme.onSurface,
-                            height: 1.35,
-                          ),
-                          maxLines: 5,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ],
+        ),
+        children: [
+          if (restKeys.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Text(
+                'No other fields',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
-          ],
-        ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var i = 0; i < restKeys.length; i++) ...[
+                    if (i > 0) const SizedBox(height: 14),
+                    Text(
+                      '*${restKeys[i]}*',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Tooltip(
+                      message: fullValue(row[restKeys[i]]),
+                      child: Text(
+                        displayValue(row[restKeys[i]]),
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: colorScheme.onSurface,
+                          height: 1.35,
+                        ),
+                        maxLines: 5,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
