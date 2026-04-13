@@ -194,7 +194,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeEntityListSearchField => 'Search in field';
 
   @override
-  String get homeEntityListSearchQueryHint => 'Text to find';
+  String get homeEntityListSearchOperator => 'Condition';
+
+  @override
+  String get homeEntityListSearchQueryHint => 'Value';
+
+  @override
+  String get homeEntityListSearchValueHintIn => 'Comma-separated values';
+
+  @override
+  String get homeEntityListSearchValueRequired =>
+      'Enter a value for this condition.';
 
   @override
   String get homeEntityListSearchClear => 'Clear search';
