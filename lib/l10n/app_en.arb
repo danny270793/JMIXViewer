@@ -97,5 +97,6 @@
   "homeEntityListSearchValueRequired": "Enter a value for this condition.",
   "homeEntityListSearchClear": "Clear search",
   "homeEntityListSearchApply": "Apply",
-  "homeEntityListSearchLoadingFields": "Loading fields…"
+  "homeEntityListSearchLoadingFields": "Loading fields…",
+  "homeAppBarMenuTooltip": "More options"
 }
