@@ -517,6 +517,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Loading fields…'**
   String get homeEntityListSearchLoadingFields;
+
+  /// No description provided for @homeAppBarMenuTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'More options'**
+  String get homeAppBarMenuTooltip;
 }
 
 class _AppLocalizationsDelegate
