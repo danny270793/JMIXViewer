@@ -1,15 +1,15 @@
 import '../../../api/jmix/jmix_rest_connector.dart';
-import '../../../business/business_ops.dart';
 import '../../../domain/jmix/drawer_entities_result.dart';
+import '../../business_use_case.dart';
 
 /// Loads entity metadata list and global `messages/entities` for the drawer.
-final class LoadDrawerEntitiesUseCase {
-  LoadDrawerEntitiesUseCase(this._rest);
+final class LoadDrawerEntitiesUseCase extends BusinessUseCase {
+  LoadDrawerEntitiesUseCase(this._rest) : super();
 
   final JmixRestConnector _rest;
 
   Future<DrawerEntitiesResult> call() {
-    return BusinessOps.run('jmix.drawer.load', () async {
+    return run('jmix.drawer.load', () async {
       final results = await Future.wait<Object>([
         _rest.metadataListEntities(),
         _rest.messagesEntities().catchError(
