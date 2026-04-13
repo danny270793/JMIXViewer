@@ -332,6 +332,36 @@ abstract class AppLocalizations {
   /// **'Save failed: {error}'**
   String entityRecordSaveFailed(String error);
 
+  /// No description provided for @entityRecordDeleteTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete record'**
+  String get entityRecordDeleteTooltip;
+
+  /// No description provided for @entityRecordDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this record?'**
+  String get entityRecordDeleteConfirmTitle;
+
+  /// No description provided for @entityRecordDeleteConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This cannot be undone. The record will be removed from the server.'**
+  String get entityRecordDeleteConfirmMessage;
+
+  /// No description provided for @entityRecordDeleteConfirmButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get entityRecordDeleteConfirmButton;
+
+  /// No description provided for @entityRecordDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete failed: {error}'**
+  String entityRecordDeleteFailed(String error);
+
   /// No description provided for @homeEntityListSortTooltip.
   ///
   /// In en, this message translates to:

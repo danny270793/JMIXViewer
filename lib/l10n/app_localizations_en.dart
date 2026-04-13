@@ -137,6 +137,24 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get entityRecordDeleteTooltip => 'Delete record';
+
+  @override
+  String get entityRecordDeleteConfirmTitle => 'Delete this record?';
+
+  @override
+  String get entityRecordDeleteConfirmMessage =>
+      'This cannot be undone. The record will be removed from the server.';
+
+  @override
+  String get entityRecordDeleteConfirmButton => 'Delete';
+
+  @override
+  String entityRecordDeleteFailed(String error) {
+    return 'Delete failed: $error';
+  }
+
+  @override
   String get homeEntityListSortTooltip => 'Sort list';
 
   @override
