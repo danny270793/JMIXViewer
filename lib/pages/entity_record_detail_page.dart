@@ -524,7 +524,7 @@ class _AttributeEditor extends ConsumerWidget {
 
     if (!editing || fieldKey == 'id' || meta.kind == AttributeInputKind.readOnlyDisplay) {
       return SelectableText(
-        EntityValueFormatting.formatFull(value),
+        EntityValueFormatting.formatDetailField(value),
         style: theme.textTheme.bodyLarge?.copyWith(
           color: colorScheme.onSurface,
           height: 1.35,
@@ -544,7 +544,7 @@ class _AttributeEditor extends ConsumerWidget {
                   child: DropdownButton<bool?>(
                     isExpanded: true,
                     value: boolValues[fieldKey],
-                    hint: const Text('—'),
+                    hint: const Text('null'),
                     items: const [
                       DropdownMenuItem<bool?>(
                         value: true,
@@ -608,7 +608,7 @@ class _AttributeEditor extends ConsumerWidget {
                       child: DropdownButton<String>(
                         isExpanded: true,
                         value: effectiveValue,
-                        hint: const Text('—'),
+                        hint: const Text('null'),
                         items: [
                           for (final e in list)
                             if (e['id'] != null)
@@ -707,7 +707,7 @@ class _AttributeEditor extends ConsumerWidget {
         );
       case AttributeInputKind.readOnlyDisplay:
         return SelectableText(
-          EntityValueFormatting.formatFull(value),
+          EntityValueFormatting.formatDetailField(value),
           style: theme.textTheme.bodyLarge?.copyWith(
             color: colorScheme.onSurface,
             height: 1.35,
@@ -726,7 +726,7 @@ class _AttributeEditor extends ConsumerWidget {
   }) {
     if (controller == null) {
       return SelectableText(
-        EntityValueFormatting.formatFull(row[fieldKey]),
+        EntityValueFormatting.formatDetailField(row[fieldKey]),
         style: theme.textTheme.bodyLarge?.copyWith(
           color: colorScheme.onSurface,
           height: 1.35,
@@ -746,7 +746,10 @@ class _AttributeEditor extends ConsumerWidget {
           maxLines: maxLines,
           inputFormatters: formatters,
           decoration: _decoration().copyWith(
-            hintText: hint,
+            hintText: hint ??
+                (value.text.isEmpty && row[fieldKey] == null
+                    ? 'null'
+                    : null),
             suffixIcon: value.text.isEmpty
                 ? null
                 : IconButton(
@@ -777,7 +780,9 @@ class _AttributeEditor extends ConsumerWidget {
             ),
             keyboardType: TextInputType.datetime,
             decoration: _decoration().copyWith(
-              hintText: 'yyyy-MM-dd',
+              hintText: c.text.isEmpty && row[fieldKey] == null
+                  ? 'null'
+                  : 'yyyy-MM-dd',
             ),
           ),
         ),
@@ -848,7 +853,9 @@ class _AttributeEditor extends ConsumerWidget {
               height: 1.35,
             ),
             decoration: _decoration().copyWith(
-              hintText: 'Tap to set date & time',
+              hintText: c.text.isEmpty && row[fieldKey] == null
+                  ? 'null'
+                  : 'Tap to set date & time',
             ),
             onTap: () => _pickDateTimeValue(context),
           ),
@@ -886,7 +893,9 @@ class _AttributeEditor extends ConsumerWidget {
             ),
             keyboardType: TextInputType.datetime,
             decoration: _decoration().copyWith(
-              hintText: 'HH:mm:ss',
+              hintText: c.text.isEmpty && row[fieldKey] == null
+                  ? 'null'
+                  : 'HH:mm:ss',
             ),
           ),
         ),
