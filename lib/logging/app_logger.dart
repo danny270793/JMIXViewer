@@ -23,6 +23,17 @@ abstract final class AppLogger {
     if (!kDebugMode) return;
     _emit('[NAV] $type: $from → $to');
   }
+
+  /// Logs a user-triggered action (debug only), e.g. sidebar select or paging.
+  /// Use a stable [name] such as `home.selectEntity`; optional [detail] for context.
+  static void logUserAction(String name, [String? detail]) {
+    if (!kDebugMode) return;
+    if (detail != null && detail.isNotEmpty) {
+      _emit('[ACTION] $name — $detail');
+    } else {
+      _emit('[ACTION] $name');
+    }
+  }
 }
 
 /// Attaches to Dio: logs each request URL in debug mode only.
