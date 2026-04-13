@@ -21,13 +21,9 @@ final class FoodieSession {
     accessTokenProvider: () => token?.accessToken,
   );
 
-  Future<void> signInWithPassword({
-    required String username,
-    required String password,
-  }) async {
-    token = await oauth.obtainTokenWithPassword(
-      username: username,
-      password: password,
+  /// OAuth2 client credentials (Basic auth + `grant_type=client_credentials`).
+  Future<void> signInWithClientCredentials() async {
+    token = await oauth.obtainTokenWithClientCredentials(
       clientId: FoodieJmixConfig.clientId,
       clientSecret: FoodieJmixConfig.clientSecret,
     );
