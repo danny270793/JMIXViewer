@@ -60,6 +60,18 @@
       }
     }
   },
+  "entityRecordDeleteTooltip": "Delete record",
+  "entityRecordDeleteConfirmTitle": "Delete this record?",
+  "entityRecordDeleteConfirmMessage": "This cannot be undone. The record will be removed from the server.",
+  "entityRecordDeleteConfirmButton": "Delete",
+  "entityRecordDeleteFailed": "Delete failed: {error}",
+  "@entityRecordDeleteFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "homeEntityListSortTooltip": "Sort list",
   "homeEntityListSortTitle": "Sort list",
   "homeEntityListSortField": "Sort by",
