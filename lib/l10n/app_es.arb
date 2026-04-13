@@ -85,7 +85,10 @@
   "homeEntityListSearchTooltip": "Buscar en la lista",
   "homeEntityListSearchTitle": "Buscar",
   "homeEntityListSearchField": "Buscar en el campo",
-  "homeEntityListSearchQueryHint": "Texto a buscar",
+  "homeEntityListSearchOperator": "Condición",
+  "homeEntityListSearchQueryHint": "Valor",
+  "homeEntityListSearchValueHintIn": "Valores separados por comas",
+  "homeEntityListSearchValueRequired": "Introduce un valor para esta condición.",
   "homeEntityListSearchClear": "Quitar búsqueda",
   "homeEntityListSearchApply": "Aplicar",
   "homeEntityListSearchLoadingFields": "Cargando campos…"
