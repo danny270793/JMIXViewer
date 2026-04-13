@@ -10,6 +10,7 @@ import '../business/business_ops.dart';
 import '../business/jmix/entity_attribute_input_meta.dart';
 import '../business/jmix/entity_messages_labels.dart';
 import '../business/jmix/entity_record_collapse_titles.dart';
+import '../business/jmix/entity_record_field_sections.dart';
 import '../business/jmix/entity_value_formatting.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/entity_metadata_providers.dart';
@@ -371,6 +372,83 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
     }
   }
 
+  List<Widget> _attributeRowsForKeys(
+    List<String> keys,
+    ThemeData theme,
+    ColorScheme colorScheme,
+    Map<String, dynamic> messages,
+  ) {
+    return [
+      for (var i = 0; i < keys.length; i++) ...[
+        if (i > 0) const SizedBox(height: 20),
+        Text(
+          attributeSidebarLabel(
+            keys[i],
+            widget.args.entityName,
+            messages,
+            null,
+          ),
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: colorScheme.primary,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
+          ),
+        ),
+        const SizedBox(height: 8),
+        _AttributeEditor(
+          fieldKey: keys[i],
+          row: _row,
+          editing: _editing,
+          meta: _metaFor(keys[i]),
+          theme: theme,
+          colorScheme: colorScheme,
+          controllers: _controllers,
+          boolValues: _boolValues,
+          enumValues: _enumValues,
+          onBoolChanged: (key, value) {
+            setState(() => _boolValues[key] = value);
+          },
+          onEnumChanged: (key, value) {
+            setState(() => _enumValues[key] = value);
+          },
+        ),
+      ],
+    ];
+  }
+
+  List<Widget> _sectionedAttributeColumns(
+    EntityRecordKeySections sections,
+    ThemeData theme,
+    ColorScheme colorScheme,
+    Map<String, dynamic> messages,
+  ) {
+    final out = <Widget>[];
+    var firstSection = true;
+    void addSection(String sectionTitle, List<String> keys) {
+      if (keys.isEmpty) return;
+      if (!firstSection) {
+        out.add(const SizedBox(height: 28));
+      }
+      firstSection = false;
+      out.add(
+        Text(
+          sectionTitle,
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+      out.add(const SizedBox(height: 12));
+      out.addAll(_attributeRowsForKeys(keys, theme, colorScheme, messages));
+    }
+
+    addSection('Framework', sections.framework);
+    addSection('Soft delete', sections.softDelete);
+    addSection('Application', sections.application);
+    return out;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -390,6 +468,8 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
       messages,
       null,
     );
+
+    final sections = EntityRecordFieldSections.partition(orderedKeys);
 
     final title = EntityRecordCollapseTitles.titleText(_row, orderedKeys);
 
@@ -440,40 +520,12 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
               ),
             ),
             const SizedBox(height: 16),
-            for (var i = 0; i < orderedKeys.length; i++) ...[
-              if (i > 0) const SizedBox(height: 20),
-              Text(
-                attributeSidebarLabel(
-                  orderedKeys[i],
-                  widget.args.entityName,
-                  messages,
-                  null,
-                ),
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.2,
-                ),
-              ),
-              const SizedBox(height: 8),
-              _AttributeEditor(
-                fieldKey: orderedKeys[i],
-                row: _row,
-                editing: _editing,
-                meta: _metaFor(orderedKeys[i]),
-                theme: theme,
-                colorScheme: colorScheme,
-                controllers: _controllers,
-                boolValues: _boolValues,
-                enumValues: _enumValues,
-                onBoolChanged: (key, value) {
-                  setState(() => _boolValues[key] = value);
-                },
-                onEnumChanged: (key, value) {
-                  setState(() => _enumValues[key] = value);
-                },
-              ),
-            ],
+            ..._sectionedAttributeColumns(
+              sections,
+              theme,
+              colorScheme,
+              messages,
+            ),
           ],
         ),
       ),
