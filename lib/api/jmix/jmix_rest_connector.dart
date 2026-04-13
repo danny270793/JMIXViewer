@@ -65,7 +65,6 @@ class JmixRestConnector {
     String? limit,
     String? offset,
     String? sort,
-    bool? returnNulls,
     bool? returnCount,
     bool? dynamicAttributes,
   }) async {
@@ -76,7 +75,7 @@ class JmixRestConnector {
         'limit': limit,
         'offset': offset,
         'sort': sort,
-        'returnNulls': returnNulls,
+        'returnNulls': true,
         'returnCount': returnCount,
         'dynamicAttributes': dynamicAttributes,
       }),
@@ -88,14 +87,13 @@ class JmixRestConnector {
     String entityName,
     String entityId, {
     String? fetchPlan,
-    bool? returnNulls,
     bool? dynamicAttributes,
   }) {
     return _getMap(
       'entities/${_enc(entityName)}/${_enc(entityId)}',
       query: _nonNullQuery({
         'fetchPlan': fetchPlan,
-        'returnNulls': returnNulls,
+        'returnNulls': true,
         'dynamicAttributes': dynamicAttributes,
       }),
     );
@@ -134,7 +132,6 @@ class JmixRestConnector {
     String? limit,
     String? offset,
     String? sort,
-    bool? returnNulls,
     bool? returnCount,
     bool? dynamicAttributes,
   }) async {
@@ -147,7 +144,7 @@ class JmixRestConnector {
         'limit': limit,
         'offset': offset,
         'sort': sort,
-        'returnNulls': returnNulls,
+        'returnNulls': true,
         'returnCount': returnCount,
         'dynamicAttributes': dynamicAttributes,
       }),
@@ -186,7 +183,6 @@ class JmixRestConnector {
     String? limit,
     String? offset,
     String? fetchPlan,
-    bool? returnNulls,
     bool? returnCount,
     bool? dynamicAttributes,
     Map<String, String>? queryParameters,
@@ -195,10 +191,10 @@ class JmixRestConnector {
       'limit': limit,
       'offset': offset,
       'fetchPlan': fetchPlan,
-      'returnNulls': returnNulls,
       'returnCount': returnCount,
       'dynamicAttributes': dynamicAttributes,
       ...?queryParameters,
+      'returnNulls': true,
     });
     final r = await _getList(
       'queries/${_enc(entityName)}/${_enc(queryName)}',
@@ -214,7 +210,6 @@ class JmixRestConnector {
     String? limit,
     String? offset,
     String? fetchPlan,
-    bool? returnNulls,
     bool? returnCount,
     bool? dynamicAttributes,
     Map<String, dynamic>? body,
@@ -223,7 +218,7 @@ class JmixRestConnector {
       'limit': limit,
       'offset': offset,
       'fetchPlan': fetchPlan,
-      'returnNulls': returnNulls,
+      'returnNulls': true,
       'returnCount': returnCount,
       'dynamicAttributes': dynamicAttributes,
     });
