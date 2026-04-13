@@ -111,4 +111,30 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get languageSpanishDesc => 'Mostrar siempre la interfaz en español';
+
+  @override
+  String get entityRecordEdit => 'Editar';
+
+  @override
+  String get entityRecordSave => 'Guardar';
+
+  @override
+  String get entityRecordCancel => 'Cancelar';
+
+  @override
+  String get entityRecordMissingId =>
+      'No se puede guardar: este registro no tiene id.';
+
+  @override
+  String entityRecordFieldInvalid(String field) {
+    return 'Valor no válido para «$field».';
+  }
+
+  @override
+  String get entityRecordSaveSuccess => 'Registro actualizado.';
+
+  @override
+  String entityRecordSaveFailed(String error) {
+    return 'Error al guardar: $error';
+  }
 }
