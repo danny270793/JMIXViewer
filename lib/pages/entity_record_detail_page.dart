@@ -525,13 +525,6 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           children: [
-            Text(
-              widget.args.entityName,
-              style: theme.textTheme.titleSmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 16),
             ..._sectionedAttributeColumns(
               sections,
               theme,
