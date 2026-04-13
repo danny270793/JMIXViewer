@@ -32,6 +32,12 @@ class _HomePageState extends State<HomePage> {
 
   late final Future<_DrawerEntityData> _entitiesFuture;
 
+  /// From `GET messages/entities` (same bundle as sidebar).
+  Map<String, dynamic> _allEntityMessages = {};
+
+  /// From `GET messages/entities/{entityName}` for attribute labels on the list.
+  Map<String, dynamic>? _fieldMessagesForEntity;
+
   String? _selectedEntityName;
   int _pageIndex = 0;
   Future<JmixEntityListResult>? _listFuture;
@@ -39,7 +45,14 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _entitiesFuture = _loadDrawerEntityData();
+    _entitiesFuture = _loadDrawerEntityData().then((data) {
+      if (mounted) {
+        setState(() {
+          _allEntityMessages = Map<String, dynamic>.from(data.messages);
+        });
+      }
+      return data;
+    });
   }
 
   /// Loads entity metadata and localized labels (`GET messages/entities`) in parallel.
@@ -65,7 +78,20 @@ class _HomePageState extends State<HomePage> {
       _selectedEntityName = entityName;
       _pageIndex = 0;
       _listFuture = _loadCurrentPage();
+      _fieldMessagesForEntity = null;
     });
+    _loadFieldMessagesFor(entityName);
+  }
+
+  Future<void> _loadFieldMessagesFor(String entityName) async {
+    try {
+      final m = await FoodieSession.instance.rest.messagesEntity(entityName);
+      if (!mounted || _selectedEntityName != entityName) return;
+      setState(() => _fieldMessagesForEntity = m);
+    } catch (_) {
+      if (!mounted || _selectedEntityName != entityName) return;
+      setState(() => _fieldMessagesForEntity = const {});
+    }
   }
 
   void _clearSelection() {
@@ -73,6 +99,7 @@ class _HomePageState extends State<HomePage> {
       _selectedEntityName = null;
       _pageIndex = 0;
       _listFuture = null;
+      _fieldMessagesForEntity = null;
     });
   }
 
@@ -331,7 +358,8 @@ class _HomePageState extends State<HomePage> {
           );
         }
 
-        final keys = _columnKeys(items);
+        final entityName = _selectedEntityName!;
+        final keys = _columnKeysSortedByDisplayText(items, entityName);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -348,6 +376,8 @@ class _HomePageState extends State<HomePage> {
                     colorScheme: colorScheme,
                     displayValue: _cellText,
                     fullValue: _fullValueText,
+                    attributeLabel: (k) =>
+                        _attributeSidebarLabel(k, entityName),
                   );
                 },
               ),
@@ -378,13 +408,50 @@ class _HomePageState extends State<HomePage> {
     return result.items.length == _pageSize;
   }
 
-  /// Union of JSON keys for the current page, sorted.
+  /// Union of JSON keys for the current page, sorted by raw key (technical).
   List<String> _columnKeys(List<Map<String, dynamic>> items) {
     final keys = <String>{};
     for (final row in items) {
       keys.addAll(row.keys);
     }
     return keys.toList()..sort();
+  }
+
+  /// Same keys as [_columnKeys], ordered by localized display text (same rules as sidebar sort).
+  List<String> _columnKeysSortedByDisplayText(
+    List<Map<String, dynamic>> items,
+    String entityName,
+  ) {
+    final keys = _columnKeys(items);
+    return [...keys]..sort(
+          (a, b) => _attributeSortKey(a, entityName)
+              .compareTo(_attributeSortKey(b, entityName)),
+        );
+  }
+
+  /// Localized caption for an attribute: per-entity messages, then `entity.attr`, then global key.
+  String? _attributeCaption(String attributeKey, String entityName) {
+    final per = _fieldMessagesForEntity;
+    if (per != null && per.isNotEmpty) {
+      final c = _messageCaption(attributeKey, per);
+      if (c != null) return c;
+    }
+    final dotted = '$entityName.$attributeKey';
+    String? c = _messageCaption(dotted, _allEntityMessages);
+    c ??= _messageCaption(attributeKey, _allEntityMessages);
+    return c;
+  }
+
+  /// Same pattern as [_sidebarLabel]: show `"Caption (attributeKey)"` when caption differs.
+  String _attributeSidebarLabel(String attributeKey, String entityName) {
+    final caption = _attributeCaption(attributeKey, entityName);
+    if (caption == null) return attributeKey;
+    if (caption == attributeKey) return caption;
+    return '$caption ($attributeKey)';
+  }
+
+  String _attributeSortKey(String attributeKey, String entityName) {
+    return _attributeCaption(attributeKey, entityName) ?? attributeKey;
   }
 
   /// Shortened for list rows (long JSON still truncated).
@@ -452,6 +519,7 @@ class _EntityRecordTile extends StatelessWidget {
     required this.colorScheme,
     required this.displayValue,
     required this.fullValue,
+    required this.attributeLabel,
   });
 
   final Map<String, dynamic> row;
@@ -460,6 +528,7 @@ class _EntityRecordTile extends StatelessWidget {
   final ColorScheme colorScheme;
   final String Function(dynamic value) displayValue;
   final String Function(dynamic value) fullValue;
+  final String Function(String attributeKey) attributeLabel;
 
   String _collapsedTitleText() {
     final v = row[_kInstanceNameField];
@@ -523,7 +592,7 @@ class _EntityRecordTile extends StatelessWidget {
                   for (var i = 0; i < restKeys.length; i++) ...[
                     if (i > 0) const SizedBox(height: 14),
                     Text(
-                      restKeys[i],
+                      attributeLabel(restKeys[i]),
                       style: theme.textTheme.labelLarge?.copyWith(
                         color: colorScheme.primary,
                         fontWeight: FontWeight.w600,
