@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../auth/foodie_session.dart';
+import '../l10n/app_locale_preference.dart';
 import '../l10n/app_localizations.dart';
-import '../l10n/locale_controller.dart';
+import '../providers/app_settings_providers.dart';
 import '../router/app_router.dart';
-import '../theme/theme_controller.dart';
 
 String _themeShortLabel(AppLocalizations l10n, ThemeMode mode) {
   return switch (mode) {
@@ -72,139 +73,143 @@ TextStyle? _sheetOptionDescriptionStyle(
   );
 }
 
+void _showLanguageBottomSheet(BuildContext context) {
+  final theme = Theme.of(context);
+  final colorScheme = theme.colorScheme;
+
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (sheetContext) {
+      return SafeArea(
+        child: Consumer(
+          builder: (context, ref, _) {
+            final selected = ref.watch(localePreferenceProvider);
+            final sheetL10n = AppLocalizations.of(sheetContext);
+            return SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                    child: Text(
+                      sheetL10n.languageSheetTitle,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  for (final pref in AppLocalePreference.values)
+                    ListTile(
+                      title: Text(_localeOptionTitle(sheetL10n, pref)),
+                      subtitle: Text(
+                        _localeOptionDescription(sheetL10n, pref),
+                        style: _sheetOptionDescriptionStyle(
+                          theme.textTheme,
+                          colorScheme,
+                        ),
+                      ),
+                      trailing: selected == pref
+                          ? Icon(Icons.check, color: colorScheme.primary)
+                          : null,
+                      onTap: () async {
+                        await ref
+                            .read(localePreferenceProvider.notifier)
+                            .setPreference(pref);
+                        if (sheetContext.mounted) {
+                          Navigator.of(sheetContext).pop();
+                        }
+                      },
+                    ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            );
+          },
+        ),
+      );
+    },
+  );
+}
+
+void _showThemeBottomSheet(BuildContext context) {
+  final theme = Theme.of(context);
+  final colorScheme = theme.colorScheme;
+
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (sheetContext) {
+      return SafeArea(
+        child: Consumer(
+          builder: (context, ref, _) {
+            final selected = ref.watch(themeModeProvider);
+            final sheetL10n = AppLocalizations.of(sheetContext);
+            return SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                    child: Text(
+                      sheetL10n.themeSheetTitle,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  for (final mode in ThemeMode.values)
+                    ListTile(
+                      title: Text(_themeOptionTitle(sheetL10n, mode)),
+                      subtitle: Text(
+                        _themeOptionDescription(sheetL10n, mode),
+                        style: _sheetOptionDescriptionStyle(
+                          theme.textTheme,
+                          colorScheme,
+                        ),
+                      ),
+                      trailing: selected == mode
+                          ? Icon(Icons.check, color: colorScheme.primary)
+                          : null,
+                      onTap: () async {
+                        await ref
+                            .read(themeModeProvider.notifier)
+                            .setThemeMode(mode);
+                        if (sheetContext.mounted) {
+                          Navigator.of(sheetContext).pop();
+                        }
+                      },
+                    ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            );
+          },
+        ),
+      );
+    },
+  );
+}
+
 /// App settings.
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
-  void _showLanguageBottomSheet(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (sheetContext) {
-        return SafeArea(
-          child: ListenableBuilder(
-            listenable: localeController,
-            builder: (context, _) {
-              final selected = localeController.preference;
-              final sheetL10n = AppLocalizations.of(sheetContext);
-              return SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-                      child: Text(
-                        sheetL10n.languageSheetTitle,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    for (final pref in AppLocalePreference.values)
-                      ListTile(
-                        title: Text(_localeOptionTitle(sheetL10n, pref)),
-                        subtitle: Text(
-                          _localeOptionDescription(sheetL10n, pref),
-                          style: _sheetOptionDescriptionStyle(
-                            theme.textTheme,
-                            colorScheme,
-                          ),
-                        ),
-                        trailing: selected == pref
-                            ? Icon(Icons.check, color: colorScheme.primary)
-                            : null,
-                        onTap: () async {
-                          await localeController.setPreference(pref);
-                          if (sheetContext.mounted) {
-                            Navigator.of(sheetContext).pop();
-                          }
-                        },
-                      ),
-                    const SizedBox(height: 8),
-                  ],
-                ),
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-
-  void _showThemeBottomSheet(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (sheetContext) {
-        return SafeArea(
-          child: ListenableBuilder(
-            listenable: themeController,
-            builder: (context, _) {
-              final selected = themeController.themeMode;
-              final sheetL10n = AppLocalizations.of(sheetContext);
-              return SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-                      child: Text(
-                        sheetL10n.themeSheetTitle,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    for (final mode in ThemeMode.values)
-                      ListTile(
-                        title: Text(_themeOptionTitle(sheetL10n, mode)),
-                        subtitle: Text(
-                          _themeOptionDescription(sheetL10n, mode),
-                          style: _sheetOptionDescriptionStyle(
-                            theme.textTheme,
-                            colorScheme,
-                          ),
-                        ),
-                        trailing: selected == mode
-                            ? Icon(Icons.check, color: colorScheme.primary)
-                            : null,
-                        onTap: () async {
-                          await themeController.setThemeMode(mode);
-                          if (sheetContext.mounted) {
-                            Navigator.of(sheetContext).pop();
-                          }
-                        },
-                      ),
-                    const SizedBox(height: 8),
-                  ],
-                ),
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
+    final mode = ref.watch(themeModeProvider);
+    final pref = ref.watch(localePreferenceProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -223,76 +228,64 @@ class SettingsPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                ListenableBuilder(
-                  listenable: themeController,
-                  builder: (context, _) {
-                    final mode = themeController.themeMode;
-                    return ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(l10n.themeOption),
-                      subtitle: Text(
-                        l10n.themeSubtitle,
-                        style: _settingsRowDescriptionStyle(
-                          textTheme,
-                          colorScheme,
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l10n.themeOption),
+                  subtitle: Text(
+                    l10n.themeSubtitle,
+                    style: _settingsRowDescriptionStyle(
+                      textTheme,
+                      colorScheme,
+                    ),
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _themeShortLabel(l10n, mode),
+                        style: textTheme.titleMedium?.copyWith(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            _themeShortLabel(l10n, mode),
-                            style: textTheme.titleMedium?.copyWith(
-                              color: colorScheme.primary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.chevron_right,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ],
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.chevron_right,
+                        color: colorScheme.onSurfaceVariant,
                       ),
-                      onTap: () => _showThemeBottomSheet(context),
-                    );
-                  },
+                    ],
+                  ),
+                  onTap: () => _showThemeBottomSheet(context),
                 ),
                 const SizedBox(height: 8),
-                ListenableBuilder(
-                  listenable: localeController,
-                  builder: (context, _) {
-                    final pref = localeController.preference;
-                    return ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(l10n.languageOption),
-                      subtitle: Text(
-                        l10n.languageSubtitle,
-                        style: _settingsRowDescriptionStyle(
-                          textTheme,
-                          colorScheme,
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l10n.languageOption),
+                  subtitle: Text(
+                    l10n.languageSubtitle,
+                    style: _settingsRowDescriptionStyle(
+                      textTheme,
+                      colorScheme,
+                    ),
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _localeShortLabel(l10n, pref),
+                        style: textTheme.titleMedium?.copyWith(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            _localeShortLabel(l10n, pref),
-                            style: textTheme.titleMedium?.copyWith(
-                              color: colorScheme.primary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.chevron_right,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ],
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.chevron_right,
+                        color: colorScheme.onSurfaceVariant,
                       ),
-                      onTap: () => _showLanguageBottomSheet(context),
-                    );
-                  },
+                    ],
+                  ),
+                  onTap: () => _showLanguageBottomSheet(context),
                 ),
               ],
             ),
