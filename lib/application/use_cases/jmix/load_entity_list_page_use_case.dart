@@ -22,7 +22,7 @@ final class LoadEntityListPageUseCase extends BusinessUseCase {
     return run('home.entityList', () async {
       if (entityName == null) return null;
       if (search != null && entityListSearchIsActive(search)) {
-        return _rest.searchEntitiesGet(
+        return _rest.searchEntitiesPost(
           entityName,
           entityListSearchRestFilter(
             property: search.fieldKey,
