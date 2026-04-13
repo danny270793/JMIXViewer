@@ -29,5 +29,15 @@
   "themeSystemDesc": "Match your device light or dark mode",
   "themeLightDesc": "Always use light appearance",
   "themeDarkDesc": "Always use dark appearance",
-  "signOut": "Sign out"
+  "signOut": "Sign out",
+  "languageSection": "Language",
+  "languageOption": "App language",
+  "languageSubtitle": "Match your device or choose English or Spanish for the interface.",
+  "languageSheetTitle": "App language",
+  "languageSystem": "System",
+  "languageEnglish": "English",
+  "languageSpanish": "Spanish",
+  "languageSystemDesc": "Use your device language when the app supports it",
+  "languageEnglishDesc": "Always show the interface in English",
+  "languageSpanishDesc": "Always show the interface in Spanish"
 }
