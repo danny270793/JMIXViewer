@@ -344,19 +344,10 @@ class _InfiniteEntityListViewState extends ConsumerState<_InfiniteEntityListView
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-          child: Text(
-            summary,
-            style: widget.theme.textTheme.bodySmall?.copyWith(
-              color: widget.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
         Expanded(
           child: ListView.separated(
             controller: _scrollController,
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             itemCount: items.length + extra,
             separatorBuilder: (context, _) => const Divider(height: 1),
             itemBuilder: (context, index) {
@@ -397,6 +388,19 @@ class _InfiniteEntityListViewState extends ConsumerState<_InfiniteEntityListView
                 },
               );
             },
+          ),
+        ),
+        Material(
+          elevation: 1,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Text(
+              summary,
+              textAlign: TextAlign.center,
+              style: widget.theme.textTheme.bodySmall?.copyWith(
+                color: widget.colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
         ),
       ],
