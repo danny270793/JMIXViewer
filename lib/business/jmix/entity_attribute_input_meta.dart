@@ -61,9 +61,9 @@ final class ParsedAttributeMeta {
     required dynamic currentValue,
     bool entityMetadataAvailable = false,
   }) {
-    if (fieldName == 'id') {
-      return const ParsedAttributeMeta(
-        name: 'id',
+    if (fieldName == 'id' || fieldName == 'version') {
+      return ParsedAttributeMeta(
+        name: fieldName,
         kind: AttributeInputKind.readOnlyDisplay,
       );
     }
@@ -84,6 +84,9 @@ final class ParsedAttributeMeta {
 
   static ParsedAttributeMeta fromProperty(Map<String, dynamic> p) {
     final name = p['name'] as String? ?? '';
+    if (name == 'version') {
+      return ParsedAttributeMeta(name: name, kind: AttributeInputKind.readOnlyDisplay);
+    }
     if (p['readOnly'] == true) {
       return ParsedAttributeMeta(name: name, kind: AttributeInputKind.readOnlyDisplay);
     }
@@ -160,6 +163,12 @@ final class ParsedAttributeMeta {
   }
 
   static ParsedAttributeMeta fallbackFromValue(String fieldName, dynamic value) {
+    if (fieldName == 'version') {
+      return const ParsedAttributeMeta(
+        name: 'version',
+        kind: AttributeInputKind.readOnlyDisplay,
+      );
+    }
     if (value is bool) {
       return ParsedAttributeMeta(name: fieldName, kind: AttributeInputKind.boolean);
     }
