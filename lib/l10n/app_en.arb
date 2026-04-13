@@ -81,5 +81,12 @@
   "homeEntityListSortDefaultOrder": "Default order",
   "homeEntityListSortApply": "Apply",
   "homeEntityListSortLoadingFields": "Loading fields…",
-  "homeEntityListSortNoFields": "No fields available for sorting."
+  "homeEntityListSortNoFields": "No fields available for sorting.",
+  "homeEntityListSearchTooltip": "Search list",
+  "homeEntityListSearchTitle": "Search",
+  "homeEntityListSearchField": "Search in field",
+  "homeEntityListSearchQueryHint": "Text to find",
+  "homeEntityListSearchClear": "Clear search",
+  "homeEntityListSearchApply": "Apply",
+  "homeEntityListSearchLoadingFields": "Loading fields…"
 }
