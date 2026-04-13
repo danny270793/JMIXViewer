@@ -2,10 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/jmix/jmix_rest_connector.dart';
-import '../api/jmix/models/jmix_entity_list_result.dart';
 import '../application/use_cases/jmix/load_drawer_entities_use_case.dart';
 import '../application/use_cases/jmix/load_entity_list_page_use_case.dart';
 import '../auth/foodie_session.dart';
+import '../business/jmix/entity_list_pagination.dart';
 import '../domain/jmix/drawer_entities_result.dart';
 import '../logging/app_logger.dart';
 
@@ -31,10 +31,9 @@ final drawerEntitiesProvider = FutureProvider<DrawerEntitiesResult>((ref) {
 
 @immutable
 class HomeSelection {
-  const HomeSelection({this.selectedEntityName, this.pageIndex = 0});
+  const HomeSelection({this.selectedEntityName});
 
   final String? selectedEntityName;
-  final int pageIndex;
 }
 
 final homeSelectionProvider =
@@ -48,36 +47,133 @@ class HomeSelectionNotifier extends Notifier<HomeSelection> {
 
   void selectEntity(String name) {
     AppLogger.logUserAction('home.selectEntity', name);
-    state = HomeSelection(selectedEntityName: name, pageIndex: 0);
+    state = HomeSelection(selectedEntityName: name);
   }
 
   void clear() {
     AppLogger.logUserAction('home.clearSelection');
     state = const HomeSelection();
   }
+}
 
-  void setPage(int page) {
-    AppLogger.logUserAction('home.setPage', '$page');
-    state = HomeSelection(
-      selectedEntityName: state.selectedEntityName,
-      pageIndex: page,
+/// First page + appended pages for infinite scroll when an entity is selected.
+@immutable
+class AccumulatedEntityList {
+  const AccumulatedEntityList({
+    required this.items,
+    this.totalCount,
+    required this.nextPageIndex,
+    required this.hasMore,
+    this.isLoadingMore = false,
+  });
+
+  final List<Map<String, dynamic>> items;
+  final int? totalCount;
+  /// Next Jmix page index to request (0-based).
+  final int nextPageIndex;
+  final bool hasMore;
+  final bool isLoadingMore;
+
+  AccumulatedEntityList copyWith({
+    List<Map<String, dynamic>>? items,
+    int? totalCount,
+    int? nextPageIndex,
+    bool? hasMore,
+    bool? isLoadingMore,
+  }) {
+    return AccumulatedEntityList(
+      items: items ?? this.items,
+      totalCount: totalCount ?? this.totalCount,
+      nextPageIndex: nextPageIndex ?? this.nextPageIndex,
+      hasMore: hasMore ?? this.hasMore,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
     );
   }
 }
 
-/// Paginated entity rows for the current [HomeSelection].
 final entityListProvider =
-    AsyncNotifierProvider<EntityListNotifier, JmixEntityListResult?>(
+    AsyncNotifierProvider<EntityListNotifier, AccumulatedEntityList?>(
   EntityListNotifier.new,
 );
 
-class EntityListNotifier extends AsyncNotifier<JmixEntityListResult?> {
+class EntityListNotifier extends AsyncNotifier<AccumulatedEntityList?> {
   @override
-  Future<JmixEntityListResult?> build() async {
+  Future<AccumulatedEntityList?> build() async {
     final sel = ref.watch(homeSelectionProvider);
-    return ref.read(loadEntityListPageUseCaseProvider)(
+    if (sel.selectedEntityName == null) return null;
+
+    final result = await ref.read(loadEntityListPageUseCaseProvider)(
       entityName: sel.selectedEntityName,
-      pageIndex: sel.pageIndex,
+      pageIndex: 0,
     );
+    if (result == null) return null;
+
+    final items = List<Map<String, dynamic>>.from(result.items);
+    final hasMore = result.items.isNotEmpty &&
+        entityListHasNextPage(
+          pageIndex: 0,
+          pageSize: kDefaultEntityPageSize,
+          result: result,
+        );
+
+    return AccumulatedEntityList(
+      items: items,
+      totalCount: result.totalCount,
+      nextPageIndex: 1,
+      hasMore: hasMore,
+      isLoadingMore: false,
+    );
+  }
+
+  /// Loads the next page when the user scrolls near the bottom.
+  Future<void> loadMore() async {
+    final current = state.valueOrNull;
+    if (current == null || !current.hasMore || current.isLoadingMore) return;
+
+    state = AsyncValue.data(current.copyWith(isLoadingMore: true));
+
+    try {
+      final sel = ref.read(homeSelectionProvider);
+      final name = sel.selectedEntityName;
+      if (name == null) {
+        state = AsyncValue.data(current.copyWith(isLoadingMore: false));
+        return;
+      }
+
+      final pageIndex = current.nextPageIndex;
+      final result = await ref.read(loadEntityListPageUseCaseProvider)(
+        entityName: name,
+        pageIndex: pageIndex,
+      );
+      if (result == null) {
+        state = AsyncValue.data(
+          current.copyWith(isLoadingMore: false, hasMore: false),
+        );
+        return;
+      }
+
+      final merged = [...current.items, ...result.items];
+      final hasMore = result.items.isNotEmpty &&
+          entityListHasNextPage(
+            pageIndex: pageIndex,
+            pageSize: kDefaultEntityPageSize,
+            result: result,
+          );
+
+      state = AsyncValue.data(
+        AccumulatedEntityList(
+          items: merged,
+          totalCount: result.totalCount ?? current.totalCount,
+          nextPageIndex: pageIndex + 1,
+          hasMore: hasMore,
+          isLoadingMore: false,
+        ),
+      );
+    } catch (_) {
+      final v = state.valueOrNull;
+      if (v != null) {
+        state = AsyncValue.data(v.copyWith(isLoadingMore: false));
+      }
+    }
   }
 }
