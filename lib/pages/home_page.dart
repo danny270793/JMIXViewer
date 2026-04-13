@@ -1,103 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../api/jmix/models/jmix_entity_list_result.dart';
-import '../auth/foodie_session.dart';
-import '../business/jmix/drawer_entities.dart';
 import '../business/jmix/entity_list_pagination.dart';
 import '../business/jmix/entity_messages_labels.dart';
 import '../l10n/app_localizations.dart';
+import '../providers/home_providers.dart';
 import '../router/app_router.dart';
 import '../widgets/entity_record_expansion_tile.dart';
 import '../widgets/pagination_bar.dart';
 
 /// Shown after a successful Foodie / Jmix sign-in.
-class HomePage extends StatefulWidget {
+class HomePage extends ConsumerWidget {
   const HomePage({super.key});
-
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  late final Future<DrawerEntitiesResult> _entitiesFuture;
-
-  /// From `GET messages/entities` (same bundle as sidebar).
-  Map<String, dynamic> _allEntityMessages = {};
-
-  /// From `GET messages/entities/{entityName}` for attribute labels on the list.
-  Map<String, dynamic>? _fieldMessagesForEntity;
-
-  String? _selectedEntityName;
-  int _pageIndex = 0;
-  Future<JmixEntityListResult>? _listFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _entitiesFuture = loadDrawerEntities(FoodieSession.instance.rest).then((data) {
-      if (mounted) {
-        setState(() {
-          _allEntityMessages = Map<String, dynamic>.from(data.messages);
-        });
-      }
-      return data;
-    });
-  }
 
   void _closeDrawer(BuildContext context) {
     Scaffold.maybeOf(context)?.closeDrawer();
   }
 
-  void _selectEntity(String entityName) {
-    setState(() {
-      _selectedEntityName = entityName;
-      _pageIndex = 0;
-      _listFuture = _loadCurrentPage();
-      _fieldMessagesForEntity = null;
-    });
-    _loadFieldMessagesFor(entityName);
-  }
-
-  Future<void> _loadFieldMessagesFor(String entityName) async {
-    final m = await loadFieldMessagesForEntity(
-      FoodieSession.instance.rest,
-      entityName,
-    );
-    if (!mounted || _selectedEntityName != entityName) return;
-    setState(() => _fieldMessagesForEntity = m);
-  }
-
-  void _clearSelection() {
-    setState(() {
-      _selectedEntityName = null;
-      _pageIndex = 0;
-      _listFuture = null;
-      _fieldMessagesForEntity = null;
-    });
-  }
-
-  void _setPage(int page) {
-    setState(() {
-      _pageIndex = page;
-      _listFuture = _loadCurrentPage();
-    });
-  }
-
-  Future<JmixEntityListResult> _loadCurrentPage() {
-    return FoodieSession.instance.rest.loadEntities(
-      _selectedEntityName!,
-      limit: '$kDefaultEntityPageSize',
-      offset: '${_pageIndex * kDefaultEntityPageSize}',
-      returnCount: true,
-    );
-  }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final l10n = AppLocalizations.of(context);
+    final selection = ref.watch(homeSelectionProvider);
 
     return Scaffold(
       drawer: Drawer(
@@ -128,11 +54,8 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
-              FutureBuilder<DrawerEntitiesResult>(
-                future: _entitiesFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Padding(
+              ref.watch(drawerEntitiesProvider).when(
+                    loading: () => const Padding(
                       padding: EdgeInsets.symmetric(vertical: 16),
                       child: Center(
                         child: SizedBox(
@@ -141,83 +64,83 @@ class _HomePageState extends State<HomePage> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ),
                       ),
-                    );
-                  }
-                  if (snapshot.hasError) {
-                    return ListTile(
+                    ),
+                    error: (e, _) => ListTile(
                       dense: true,
                       title: Text(
                         'Could not load entities',
                         style: TextStyle(color: colorScheme.error),
                       ),
                       subtitle: Text(
-                        '${snapshot.error}',
+                        '$e',
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    );
-                  }
-                  final data = snapshot.data!;
-                  final list = data.metadata;
-                  final messages = data.messages;
-                  if (list.isEmpty) {
-                    return ListTile(
-                      dense: true,
-                      title: Text(
-                        'No entities',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    );
-                  }
-                  final sorted = [...list]..sort(
-                        (a, b) => sidebarSortKey(
-                              entityDisplayName(a),
-                              messages,
-                            ).compareTo(
-                              sidebarSortKey(
-                                entityDisplayName(b),
-                                messages,
-                              ),
-                            ),
-                      );
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      for (final meta in sorted)
-                        ListTile(
+                    ),
+                    data: (data) {
+                      final list = data.metadata;
+                      final messages = data.messages;
+                      if (list.isEmpty) {
+                        return ListTile(
                           dense: true,
                           title: Text(
-                            sidebarLabel(
-                              entityDisplayName(meta),
-                              messages,
+                            'No entities',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                          onTap: () {
-                            _selectEntity(entityDisplayName(meta));
-                            _closeDrawer(context);
-                          },
-                        ),
-                    ],
-                  );
-                },
-              ),
+                        );
+                      }
+                      final sorted = [...list]..sort(
+                            (a, b) => sidebarSortKey(
+                                  entityDisplayName(a),
+                                  messages,
+                                ).compareTo(
+                                  sidebarSortKey(
+                                    entityDisplayName(b),
+                                    messages,
+                                  ),
+                                ),
+                          );
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (final meta in sorted)
+                            ListTile(
+                              dense: true,
+                              title: Text(
+                                sidebarLabel(
+                                  entityDisplayName(meta),
+                                  messages,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              onTap: () {
+                                ref
+                                    .read(homeSelectionProvider.notifier)
+                                    .selectEntity(entityDisplayName(meta));
+                                _closeDrawer(context);
+                              },
+                            ),
+                        ],
+                      );
+                    },
+                  ),
             ],
           ),
         ),
       ),
       appBar: AppBar(
-        leading: _selectedEntityName != null
+        leading: selection.selectedEntityName != null
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
-                onPressed: _clearSelection,
+                onPressed: () =>
+                    ref.read(homeSelectionProvider.notifier).clear(),
               )
             : null,
         title: Text(
-          _selectedEntityName ?? l10n.homeTitle,
+          selection.selectedEntityName ?? l10n.homeTitle,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -229,9 +152,15 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: _selectedEntityName == null
+      body: selection.selectedEntityName == null
           ? _buildWelcomeBody(context, colorScheme, l10n)
-          : _buildEntityList(theme, colorScheme),
+          : _buildEntityList(
+              context,
+              ref,
+              theme,
+              colorScheme,
+              selection,
+            ),
     );
   }
 
@@ -271,40 +200,52 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildEntityList(ThemeData theme, ColorScheme colorScheme) {
-    return FutureBuilder<JmixEntityListResult>(
-      future: _listFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '${snapshot.error}',
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _listFuture = _loadCurrentPage();
-                      });
-                    },
-                    child: const Text('Retry'),
-                  ),
-                ],
+  Widget _buildEntityList(
+    BuildContext context,
+    WidgetRef ref,
+    ThemeData theme,
+    ColorScheme colorScheme,
+    HomeSelection selection,
+  ) {
+    final listAsync = ref.watch(entityListProvider);
+    final drawerMessages = ref.watch(drawerEntitiesProvider).maybeWhen(
+          data: (d) => d.messages,
+          orElse: () => <String, dynamic>{},
+        );
+    final fieldMessages = ref.watch(fieldMessagesForSelectionProvider).maybeWhen(
+          data: (m) => m,
+          orElse: () => null,
+        );
+
+    return listAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '$e',
+                textAlign: TextAlign.center,
               ),
-            ),
-          );
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () => ref.invalidate(entityListProvider),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      ),
+      data: (result) {
+        if (result == null) {
+          return const SizedBox.shrink();
         }
-        final result = snapshot.data!;
         final items = result.items;
+        final entityName = selection.selectedEntityName!;
+        final pageIndex = selection.pageIndex;
+
         if (items.isEmpty) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -319,31 +260,35 @@ class _HomePageState extends State<HomePage> {
               ),
               PaginationBar(
                 label: entityListPaginationBarLabel(
-                  pageIndex: _pageIndex,
+                  pageIndex: pageIndex,
                   pageSize: kDefaultEntityPageSize,
                   itemCount: 0,
                   totalCount: result.totalCount,
                 ),
-                onPrevious:
-                    _pageIndex > 0 ? () => _setPage(_pageIndex - 1) : null,
+                onPrevious: pageIndex > 0
+                    ? () => ref.read(homeSelectionProvider.notifier).setPage(
+                          pageIndex - 1,
+                        )
+                    : null,
                 onNext: entityListHasNextPage(
-                  pageIndex: _pageIndex,
+                  pageIndex: pageIndex,
                   pageSize: kDefaultEntityPageSize,
                   result: result,
                 )
-                    ? () => _setPage(_pageIndex + 1)
+                    ? () => ref.read(homeSelectionProvider.notifier).setPage(
+                          pageIndex + 1,
+                        )
                     : null,
               ),
             ],
           );
         }
 
-        final entityName = _selectedEntityName!;
         final keys = entityRowColumnKeysSortedByDisplay(
           items,
           entityName,
-          _allEntityMessages,
-          _fieldMessagesForEntity,
+          drawerMessages,
+          fieldMessages,
         );
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -360,27 +305,32 @@ class _HomePageState extends State<HomePage> {
                     theme: theme,
                     colorScheme: colorScheme,
                     entityName: entityName,
-                    allEntityMessages: _allEntityMessages,
-                    fieldMessagesForEntity: _fieldMessagesForEntity,
+                    allEntityMessages: drawerMessages,
+                    fieldMessagesForEntity: fieldMessages,
                   );
                 },
               ),
             ),
             PaginationBar(
               label: entityListPaginationBarLabel(
-                pageIndex: _pageIndex,
+                pageIndex: pageIndex,
                 pageSize: kDefaultEntityPageSize,
                 itemCount: items.length,
                 totalCount: result.totalCount,
               ),
-              onPrevious:
-                  _pageIndex > 0 ? () => _setPage(_pageIndex - 1) : null,
+              onPrevious: pageIndex > 0
+                  ? () => ref.read(homeSelectionProvider.notifier).setPage(
+                        pageIndex - 1,
+                      )
+                  : null,
               onNext: entityListHasNextPage(
-                pageIndex: _pageIndex,
+                pageIndex: pageIndex,
                 pageSize: kDefaultEntityPageSize,
                 result: result,
               )
-                  ? () => _setPage(_pageIndex + 1)
+                  ? () => ref.read(homeSelectionProvider.notifier).setPage(
+                        pageIndex + 1,
+                      )
                   : null,
             ),
           ],
