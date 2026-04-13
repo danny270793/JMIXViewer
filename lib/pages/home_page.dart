@@ -171,11 +171,11 @@ class _HomePageState extends State<HomePage> {
                     );
                   }
                   final sorted = [...list]..sort(
-                        (a, b) => _sidebarLabel(
+                        (a, b) => _sidebarSortKey(
                               _entityDisplayName(a),
                               messages,
                             ).compareTo(
-                              _sidebarLabel(
+                              _sidebarSortKey(
                                 _entityDisplayName(b),
                                 messages,
                               ),
@@ -433,6 +433,11 @@ class _HomePageState extends State<HomePage> {
     if (caption == null) return entityName;
     if (caption == entityName) return caption;
     return '$caption ($entityName)';
+  }
+
+  /// Sort order: localized caption when present, otherwise [entityName] (not the `"Caption (entityName)"` line).
+  String _sidebarSortKey(String entityName, Map<String, dynamic> messages) {
+    return _messageCaption(entityName, messages) ?? entityName;
   }
 }
 
