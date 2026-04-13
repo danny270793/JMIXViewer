@@ -53,6 +53,26 @@ final class ParsedAttributeMeta {
     return out;
   }
 
+  /// Puts attributes with `mandatory: true` first; preserves relative order within each group.
+  static List<String> sortFieldKeysMandatoryFirst(
+    List<String> keys,
+    Map<String, Map<String, dynamic>>? propertyByName,
+  ) {
+    if (propertyByName == null || propertyByName.isEmpty) {
+      return List<String>.from(keys);
+    }
+    final mandatory = <String>[];
+    final optional = <String>[];
+    for (final k in keys) {
+      if (propertyByName[k]?['mandatory'] == true) {
+        mandatory.add(k);
+      } else {
+        optional.add(k);
+      }
+    }
+    return [...mandatory, ...optional];
+  }
+
   /// When [entityMetadataAvailable] is true, the catalog from
   /// `GET metadata/entities/{entityName}` was loaded: only attributes listed
   /// in `properties` are editable; any other key on the row is read-only.
