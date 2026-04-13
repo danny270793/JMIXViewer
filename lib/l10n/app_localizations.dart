@@ -421,6 +421,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No fields available for sorting.'**
   String get homeEntityListSortNoFields;
+
+  /// No description provided for @homeEntityListSearchTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Search list'**
+  String get homeEntityListSearchTooltip;
+
+  /// No description provided for @homeEntityListSearchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get homeEntityListSearchTitle;
+
+  /// No description provided for @homeEntityListSearchField.
+  ///
+  /// In en, this message translates to:
+  /// **'Search in field'**
+  String get homeEntityListSearchField;
+
+  /// No description provided for @homeEntityListSearchQueryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Text to find'**
+  String get homeEntityListSearchQueryHint;
+
+  /// No description provided for @homeEntityListSearchClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get homeEntityListSearchClear;
+
+  /// No description provided for @homeEntityListSearchApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get homeEntityListSearchApply;
+
+  /// No description provided for @homeEntityListSearchLoadingFields.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading fields…'**
+  String get homeEntityListSearchLoadingFields;
 }
 
 class _AppLocalizationsDelegate
