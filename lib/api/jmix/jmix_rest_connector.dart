@@ -388,6 +388,8 @@ class JmixRestConnector {
     return _getMap('messages/entities');
   }
 
+  /// Prefer [messagesEntities] when possible; the bulk map usually includes
+  /// per-entity keys (e.g. `EntityName.attribute`) so a second GET is redundant.
   Future<Map<String, dynamic>> messagesEntity(String entityName) {
     return _getMap('messages/entities/${_enc(entityName)}');
   }
