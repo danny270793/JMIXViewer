@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../api/jmix/jmix_rest_connector.dart';
 import '../api/jmix/models/jmix_entity_list_result.dart';
 import '../auth/foodie_session.dart';
+import '../business/business_ops.dart';
 import '../business/jmix/drawer_entities.dart';
 import '../business/jmix/entity_list_pagination.dart';
 import '../logging/app_logger.dart';
@@ -76,14 +77,16 @@ final entityListProvider =
 class EntityListNotifier extends AsyncNotifier<JmixEntityListResult?> {
   @override
   Future<JmixEntityListResult?> build() async {
-    final sel = ref.watch(homeSelectionProvider);
-    if (sel.selectedEntityName == null) return null;
-    final rest = ref.read(jmixRestConnectorProvider);
-    return rest.loadEntities(
-      sel.selectedEntityName!,
-      limit: '$kDefaultEntityPageSize',
-      offset: '${sel.pageIndex * kDefaultEntityPageSize}',
-      returnCount: true,
-    );
+    return BusinessOps.run('home.entityList', () async {
+      final sel = ref.watch(homeSelectionProvider);
+      if (sel.selectedEntityName == null) return null;
+      final rest = ref.read(jmixRestConnectorProvider);
+      return rest.loadEntities(
+        sel.selectedEntityName!,
+        limit: '$kDefaultEntityPageSize',
+        offset: '${sel.pageIndex * kDefaultEntityPageSize}',
+        returnCount: true,
+      );
+    });
   }
 }
