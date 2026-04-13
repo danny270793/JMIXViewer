@@ -139,6 +139,24 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get entityRecordDeleteTooltip => 'Eliminar registro';
+
+  @override
+  String get entityRecordDeleteConfirmTitle => '¿Eliminar este registro?';
+
+  @override
+  String get entityRecordDeleteConfirmMessage =>
+      'Esta acción no se puede deshacer. El registro se eliminará del servidor.';
+
+  @override
+  String get entityRecordDeleteConfirmButton => 'Eliminar';
+
+  @override
+  String entityRecordDeleteFailed(String error) {
+    return 'Error al eliminar: $error';
+  }
+
+  @override
   String get homeEntityListSortTooltip => 'Ordenar lista';
 
   @override
