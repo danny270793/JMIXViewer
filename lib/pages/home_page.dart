@@ -194,7 +194,7 @@ class _HomePageState extends State<HomePage> {
       ),
       body: _selectedEntityName == null
           ? _buildWelcomeBody(context, colorScheme, l10n)
-          : _buildEntityTable(theme),
+          : _buildEntityList(theme, colorScheme),
     );
   }
 
@@ -234,7 +234,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildEntityTable(ThemeData theme) {
+  Widget _buildEntityList(ThemeData theme, ColorScheme colorScheme) {
     return FutureBuilder<JmixEntityListResult>(
       future: _listFuture,
       builder: (context, snapshot) {
@@ -300,43 +300,20 @@ class _HomePageState extends State<HomePage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: SingleChildScrollView(
-                  child: DataTable(
-                    headingRowHeight: 40,
-                    dataRowMinHeight: 36,
-                    dataRowMaxHeight: 72,
-                    columns: [
-                      for (final k in keys)
-                        DataColumn(
-                          label: Text(
-                            k,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                    ],
-                    rows: [
-                      for (final row in items)
-                        DataRow(
-                          cells: [
-                            for (final k in keys)
-                              DataCell(
-                                Tooltip(
-                                  message: _cellText(row[k]),
-                                  child: Text(
-                                    _cellText(row[k]),
-                                    maxLines: 3,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                    ],
-                  ),
-                ),
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                itemCount: items.length,
+                separatorBuilder: (_, _) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  return _EntityRecordCard(
+                    row: items[index],
+                    keys: keys,
+                    theme: theme,
+                    colorScheme: colorScheme,
+                    displayValue: _cellText,
+                    fullValue: _fullValueText,
+                  );
+                },
               ),
             ),
             _PaginationBar(
@@ -374,6 +351,7 @@ class _HomePageState extends State<HomePage> {
     return keys.toList()..sort();
   }
 
+  /// Shortened for card display (long JSON still truncated).
   String _cellText(dynamic value) {
     if (value == null) return '—';
     if (value is String) return value;
@@ -387,11 +365,85 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  /// Full text for tooltips (no 200-char cap).
+  String _fullValueText(dynamic value) {
+    if (value == null) return '—';
+    if (value is String) return value;
+    if (value is num || value is bool) return value.toString();
+    try {
+      return jsonEncode(value);
+    } catch (_) {
+      return value.toString();
+    }
+  }
+
   /// Jmix `metadata/entities` items use `entityName` (see OpenAPI `entityMetadata`).
   String _entityDisplayName(Map<String, dynamic> meta) {
     final name = meta['entityName'];
     if (name is String && name.isNotEmpty) return name;
     return '?';
+  }
+}
+
+class _EntityRecordCard extends StatelessWidget {
+  const _EntityRecordCard({
+    required this.row,
+    required this.keys,
+    required this.theme,
+    required this.colorScheme,
+    required this.displayValue,
+    required this.fullValue,
+  });
+
+  final Map<String, dynamic> row;
+  final List<String> keys;
+  final ThemeData theme;
+  final ColorScheme colorScheme;
+  final String Function(dynamic value) displayValue;
+  final String Function(dynamic value) fullValue;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var i = 0; i < keys.length; i++) ...[
+              if (i > 0) const SizedBox(height: 14),
+              Text(
+                '*${keys[i]}*',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.2,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Tooltip(
+                message: fullValue(row[keys[i]]),
+                child: Text(
+                  displayValue(row[keys[i]]),
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: colorScheme.onSurface,
+                    height: 1.35,
+                  ),
+                  maxLines: 5,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }
 
