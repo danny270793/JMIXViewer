@@ -17,6 +17,12 @@ abstract final class AppLogger {
     final method = options.method.toUpperCase();
     _emit('[HTTP] $method ${options.uri}');
   }
+
+  /// Logs a navigation event: [type] (push, pop, replace, remove) and path from → to.
+  static void logNavigation(String type, String from, String to) {
+    if (!kDebugMode) return;
+    _emit('[NAV] $type: $from → $to');
+  }
 }
 
 /// Attaches to Dio: logs each request URL in debug mode only.
