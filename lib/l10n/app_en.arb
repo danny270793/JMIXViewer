@@ -85,7 +85,10 @@
   "homeEntityListSearchTooltip": "Search list",
   "homeEntityListSearchTitle": "Search",
   "homeEntityListSearchField": "Search in field",
-  "homeEntityListSearchQueryHint": "Text to find",
+  "homeEntityListSearchOperator": "Condition",
+  "homeEntityListSearchQueryHint": "Value",
+  "homeEntityListSearchValueHintIn": "Comma-separated values",
+  "homeEntityListSearchValueRequired": "Enter a value for this condition.",
   "homeEntityListSearchClear": "Clear search",
   "homeEntityListSearchApply": "Apply",
   "homeEntityListSearchLoadingFields": "Loading fields…"
