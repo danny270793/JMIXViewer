@@ -9,9 +9,94 @@ import '../theme/theme_controller.dart';
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
+  static String _themeShortLabel(ThemeMode mode) {
+    return switch (mode) {
+      ThemeMode.system => 'System',
+      ThemeMode.light => 'Light',
+      ThemeMode.dark => 'Dark',
+    };
+  }
+
+  static String _themeOptionTitle(ThemeMode mode) {
+    return switch (mode) {
+      ThemeMode.system => 'System',
+      ThemeMode.light => 'Light',
+      ThemeMode.dark => 'Dark',
+    };
+  }
+
+  static String _themeOptionDescription(ThemeMode mode) {
+    return switch (mode) {
+      ThemeMode.system => 'Match your device light or dark mode',
+      ThemeMode.light => 'Always use light appearance',
+      ThemeMode.dark => 'Always use dark appearance',
+    };
+  }
+
+  void _showThemeBottomSheet(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: ListenableBuilder(
+            listenable: themeController,
+            builder: (context, _) {
+              final selected = themeController.themeMode;
+              return SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                      child: Text(
+                        'Theme',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    for (final mode in ThemeMode.values)
+                      ListTile(
+                        title: Text(_themeOptionTitle(mode)),
+                        subtitle: Text(
+                          _themeOptionDescription(mode),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        trailing: selected == mode
+                            ? Icon(Icons.check, color: colorScheme.primary)
+                            : null,
+                        onTap: () async {
+                          await themeController.setThemeMode(mode);
+                          if (sheetContext.mounted) {
+                            Navigator.of(sheetContext).pop();
+                          }
+                        },
+                      ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -25,49 +110,44 @@ class SettingsPage extends StatelessWidget {
               children: [
                 Text(
                   'Appearance',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 ListenableBuilder(
                   listenable: themeController,
                   builder: (context, _) {
                     final mode = themeController.themeMode;
-                    return Align(
-                      alignment: Alignment.centerLeft,
-                      child: SegmentedButton<ThemeMode>(
-                        segments: const [
-                          ButtonSegment<ThemeMode>(
-                            value: ThemeMode.system,
-                            label: Text('System'),
-                            tooltip: 'Match device setting',
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Theme'),
+                      subtitle: Text(
+                        'Choose how the app follows your device or uses a fixed light or dark look.',
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _themeShortLabel(mode),
+                            style: textTheme.titleMedium?.copyWith(
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
-                          ButtonSegment<ThemeMode>(
-                            value: ThemeMode.light,
-                            label: Text('Light'),
-                          ),
-                          ButtonSegment<ThemeMode>(
-                            value: ThemeMode.dark,
-                            label: Text('Dark'),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.chevron_right,
+                            color: colorScheme.onSurfaceVariant,
                           ),
                         ],
-                        selected: {mode},
-                        emptySelectionAllowed: false,
-                        multiSelectionEnabled: false,
-                        onSelectionChanged: (selected) {
-                          themeController.setThemeMode(selected.first);
-                        },
                       ),
+                      onTap: () => _showThemeBottomSheet(context),
                     );
                   },
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Other preferences will appear here.',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
                 ),
               ],
             ),
