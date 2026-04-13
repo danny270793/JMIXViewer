@@ -315,6 +315,38 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
     }
   }
 
+  Future<void> _onPullRefresh() async {
+    if (_editing) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Save or cancel your edits before refreshing.'),
+          ),
+        );
+      }
+      return;
+    }
+    if (_saving) return;
+    final entityId = _entityIdForRestPath(_row);
+    if (entityId == null) return;
+    try {
+      final map = await BusinessOps.run(
+        'entityRecord.load',
+        () => ref.read(jmixRestConnectorProvider).loadEntity(
+              widget.args.entityName,
+              entityId,
+            ),
+      );
+      if (!mounted) return;
+      setState(() => _row = Map<String, dynamic>.from(map));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Refresh failed: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -364,51 +396,55 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
           ],
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-        children: [
-          Text(
-            widget.args.entityName,
-            style: theme.textTheme.titleSmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 16),
-          for (var i = 0; i < orderedKeys.length; i++) ...[
-            if (i > 0) const SizedBox(height: 20),
+      body: RefreshIndicator(
+        onRefresh: _onPullRefresh,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+          children: [
             Text(
-              attributeSidebarLabel(
-                orderedKeys[i],
-                widget.args.entityName,
-                messages,
-                null,
-              ),
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: colorScheme.primary,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.2,
+              widget.args.entityName,
+              style: theme.textTheme.titleSmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 8),
-            _AttributeEditor(
-              fieldKey: orderedKeys[i],
-              row: _row,
-              editing: _editing,
-              meta: _metaFor(orderedKeys[i]),
-              theme: theme,
-              colorScheme: colorScheme,
-              controllers: _controllers,
-              boolValues: _boolValues,
-              enumValues: _enumValues,
-              onBoolChanged: (key, value) {
-                setState(() => _boolValues[key] = value);
-              },
-              onEnumChanged: (key, value) {
-                setState(() => _enumValues[key] = value);
-              },
-            ),
+            const SizedBox(height: 16),
+            for (var i = 0; i < orderedKeys.length; i++) ...[
+              if (i > 0) const SizedBox(height: 20),
+              Text(
+                attributeSidebarLabel(
+                  orderedKeys[i],
+                  widget.args.entityName,
+                  messages,
+                  null,
+                ),
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.2,
+                ),
+              ),
+              const SizedBox(height: 8),
+              _AttributeEditor(
+                fieldKey: orderedKeys[i],
+                row: _row,
+                editing: _editing,
+                meta: _metaFor(orderedKeys[i]),
+                theme: theme,
+                colorScheme: colorScheme,
+                controllers: _controllers,
+                boolValues: _boolValues,
+                enumValues: _enumValues,
+                onBoolChanged: (key, value) {
+                  setState(() => _boolValues[key] = value);
+                },
+                onEnumChanged: (key, value) {
+                  setState(() => _enumValues[key] = value);
+                },
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
