@@ -440,11 +440,29 @@ abstract class AppLocalizations {
   /// **'Search in field'**
   String get homeEntityListSearchField;
 
+  /// No description provided for @homeEntityListSearchOperator.
+  ///
+  /// In en, this message translates to:
+  /// **'Condition'**
+  String get homeEntityListSearchOperator;
+
   /// No description provided for @homeEntityListSearchQueryHint.
   ///
   /// In en, this message translates to:
-  /// **'Text to find'**
+  /// **'Value'**
   String get homeEntityListSearchQueryHint;
+
+  /// No description provided for @homeEntityListSearchValueHintIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Comma-separated values'**
+  String get homeEntityListSearchValueHintIn;
+
+  /// No description provided for @homeEntityListSearchValueRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a value for this condition.'**
+  String get homeEntityListSearchValueRequired;
 
   /// No description provided for @homeEntityListSearchClear.
   ///
