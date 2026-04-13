@@ -33,8 +33,8 @@ class HomePage extends ConsumerWidget {
         child: Builder(
           builder: (drawerContext) {
             return SafeArea(
-              child: ListView(
-                padding: EdgeInsets.zero,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   DrawerHeader(
                     decoration: BoxDecoration(
@@ -59,59 +59,68 @@ class HomePage extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  ref.watch(drawerEntitiesProvider).when(
-                    loading: () => const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      child: Center(
+                  Expanded(
+                    child: ref.watch(drawerEntitiesProvider).when(
+                      loading: () => const Center(
                         child: SizedBox(
                           width: 24,
                           height: 24,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ),
                       ),
-                    ),
-                    error: (e, _) => ListTile(
-                      dense: true,
-                      title: Text(
-                        'Could not load entities',
-                        style: TextStyle(color: colorScheme.error),
-                      ),
-                      subtitle: Text(
-                        '$e',
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    data: (data) {
-                      final list = data.metadata;
-                      final messages = data.messages;
-                      if (list.isEmpty) {
-                        return ListTile(
-                          dense: true,
-                          title: Text(
-                            'No entities',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
+                      error: (e, _) => ListView(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        children: [
+                          ListTile(
+                            dense: true,
+                            title: Text(
+                              'Could not load entities',
+                              style: TextStyle(color: colorScheme.error),
+                            ),
+                            subtitle: Text(
+                              '$e',
+                              maxLines: 8,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        );
-                      }
-                      final sorted = [...list]..sort(
-                            (a, b) => sidebarSortKey(
-                                  entityDisplayName(a),
-                                  messages,
-                                ).compareTo(
-                                  sidebarSortKey(
-                                    entityDisplayName(b),
-                                    messages,
+                        ],
+                      ),
+                      data: (data) {
+                        final list = data.metadata;
+                        final messages = data.messages;
+                        if (list.isEmpty) {
+                          return ListView(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            children: [
+                              ListTile(
+                                dense: true,
+                                title: Text(
+                                  'No entities',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
                                   ),
                                 ),
+                              ),
+                            ],
                           );
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          for (final meta in sorted)
-                            ListTile(
+                        }
+                        final sorted = [...list]..sort(
+                              (a, b) => sidebarSortKey(
+                                    entityDisplayName(a),
+                                    messages,
+                                  ).compareTo(
+                                    sidebarSortKey(
+                                      entityDisplayName(b),
+                                      messages,
+                                    ),
+                                  ),
+                            );
+                        return ListView.builder(
+                          padding: EdgeInsets.zero,
+                          itemCount: sorted.length,
+                          itemBuilder: (context, index) {
+                            final meta = sorted[index];
+                            return ListTile(
                               dense: true,
                               title: Text(
                                 sidebarLabel(
@@ -128,10 +137,11 @@ class HomePage extends ConsumerWidget {
                                 Scaffold.maybeOf(drawerContext)
                                     ?.closeDrawer();
                               },
-                            ),
-                        ],
-                      );
-                    },
+                            );
+                          },
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
