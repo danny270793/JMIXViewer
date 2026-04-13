@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../auth/foodie_session.dart';
 import '../router/app_router.dart';
 
 /// Shown after a successful Foodie / Jmix sign-in.
@@ -10,17 +9,16 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final session = FoodieSession.instance;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('JMIX Viewer'),
         actions: [
-          TextButton(
-            onPressed: () {
-              session.signOut();
-              context.go(AppRoutes.login);
-            },
-            child: const Text('Sign out'),
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Settings',
+            onPressed: () => context.push(AppRoutes.settings),
           ),
         ],
       ),
@@ -33,7 +31,7 @@ class HomePage extends StatelessWidget {
               Icon(
                 Icons.check_circle_outline,
                 size: 64,
-                color: Theme.of(context).colorScheme.primary,
+                color: colorScheme.primary,
               ),
               const SizedBox(height: 16),
               Text(
@@ -45,7 +43,7 @@ class HomePage extends StatelessWidget {
               Text(
                 'You are signed in. Access token is active for API calls.',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                 textAlign: TextAlign.center,
               ),
