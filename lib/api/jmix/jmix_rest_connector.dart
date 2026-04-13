@@ -152,13 +152,30 @@ class JmixRestConnector {
     return r;
   }
 
+  /// Search with filter in JSON body; pagination/sort via query (same as GET search).
   Future<JmixEntityListResult> searchEntitiesPost(
     String entityName,
-    Map<String, dynamic> body,
-  ) async {
+    Map<String, dynamic> filterBody, {
+    String? fetchPlan,
+    String? limit,
+    String? offset,
+    String? sort,
+    bool? returnCount,
+    bool? dynamicAttributes,
+  }) async {
+    // Same semantics as GET search: `filter` is JSON (here as a body field; server parses it).
     final r = await _dio.post<dynamic>(
       'entities/${_enc(entityName)}/search',
-      data: body,
+      data: <String, dynamic>{
+        'filter': filterBody,
+        'fetchPlan': fetchPlan,
+        'limit': limit,
+        'offset': offset,
+        'sort': sort,
+        'returnNulls': true,
+        'returnCount': returnCount,
+        'dynamicAttributes': dynamicAttributes,
+      },
       options: Options(responseType: ResponseType.json),
     );
     _throwIfError(r);
