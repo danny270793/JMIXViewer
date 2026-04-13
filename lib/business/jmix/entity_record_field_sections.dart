@@ -6,6 +6,7 @@ abstract final class EntityRecordFieldSections {
   static const frameworkFieldOrder = <String>[
     '_entityName',
     '_instanceName',
+    'version',
   ];
 
   /// Audit / soft-delete style fields (fixed order when present).
@@ -16,10 +17,9 @@ abstract final class EntityRecordFieldSections {
     'deletedDate',
     'lastModifiedBy',
     'lastModifiedDate',
-    'version',
   ];
 
-  static const _frameworkSet = {'_entityName', '_instanceName'};
+  static const _frameworkSet = {'_entityName', '_instanceName', 'version'};
   static const _softDeleteSet = {
     'createdBy',
     'createdDate',
@@ -27,7 +27,6 @@ abstract final class EntityRecordFieldSections {
     'deletedDate',
     'lastModifiedBy',
     'lastModifiedDate',
-    'version',
   };
 
   /// Splits [orderedKeys] (e.g. from [entityRowColumnKeysSortedByDisplay]) into
