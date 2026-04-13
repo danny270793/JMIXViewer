@@ -14,6 +14,8 @@ import '../providers/home_providers.dart';
 import '../router/app_router.dart';
 import 'entity_record_detail_page.dart';
 
+enum _HomeOverflowAction { search, sort, settings }
+
 /// Shown after a successful Foodie / Jmix sign-in.
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -144,34 +146,70 @@ class HomePage extends ConsumerWidget {
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
-          if (selection.selectedEntityName != null) ...[
+          if (selection.selectedEntityName != null)
+            PopupMenuButton<_HomeOverflowAction>(
+              tooltip: l10n.homeAppBarMenuTooltip,
+              icon: const Icon(Icons.more_vert),
+              onSelected: (_HomeOverflowAction value) {
+                final name = selection.selectedEntityName!;
+                switch (value) {
+                  case _HomeOverflowAction.search:
+                    _showEntityListSearchSheet(context, ref, name);
+                  case _HomeOverflowAction.sort:
+                    _showEntityListSortSheet(context, name);
+                  case _HomeOverflowAction.settings:
+                    context.push(AppRoutes.settings);
+                }
+              },
+              itemBuilder: (BuildContext context) => [
+                PopupMenuItem(
+                  value: _HomeOverflowAction.search,
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.search,
+                        color: activeSearch != null
+                            ? colorScheme.primary
+                            : null,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(l10n.homeEntityListSearchTooltip),
+                      ),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: _HomeOverflowAction.sort,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.swap_vert),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(l10n.homeEntityListSortTooltip),
+                      ),
+                    ],
+                  ),
+                ),
+                const PopupMenuDivider(),
+                PopupMenuItem(
+                  value: _HomeOverflowAction.settings,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.settings_outlined),
+                      const SizedBox(width: 12),
+                      Expanded(child: Text(l10n.settingsTooltip)),
+                    ],
+                  ),
+                ),
+              ],
+            )
+          else
             IconButton(
-              icon: Icon(
-                Icons.search,
-                color:
-                    activeSearch != null ? colorScheme.primary : null,
-              ),
-              tooltip: l10n.homeEntityListSearchTooltip,
-              onPressed: () => _showEntityListSearchSheet(
-                context,
-                ref,
-                selection.selectedEntityName!,
-              ),
+              icon: const Icon(Icons.settings_outlined),
+              tooltip: l10n.settingsTooltip,
+              onPressed: () => context.push(AppRoutes.settings),
             ),
-            IconButton(
-              icon: const Icon(Icons.swap_vert),
-              tooltip: l10n.homeEntityListSortTooltip,
-              onPressed: () => _showEntityListSortSheet(
-                context,
-                selection.selectedEntityName!,
-              ),
-            ),
-          ],
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: l10n.settingsTooltip,
-            onPressed: () => context.push(AppRoutes.settings),
-          ),
         ],
       ),
       body: selection.selectedEntityName == null
