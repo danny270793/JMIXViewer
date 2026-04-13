@@ -125,13 +125,49 @@ abstract class AppLocalizations {
   /// No description provided for @loginBody.
   ///
   /// In en, this message translates to:
-  /// **'Connect to Foodie using OAuth2 client credentials. The app requests an access token, then sends it as Authorization: Bearer on API calls.'**
+  /// **'Enter your Jmix application URL and OAuth2 client credentials. The app requests an access token, then sends it as Authorization: Bearer on API calls.'**
   String get loginBody;
+
+  /// No description provided for @loginApplicationUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Application URL'**
+  String get loginApplicationUrl;
+
+  /// No description provided for @loginClientId.
+  ///
+  /// In en, this message translates to:
+  /// **'Client ID'**
+  String get loginClientId;
+
+  /// No description provided for @loginClientSecret.
+  ///
+  /// In en, this message translates to:
+  /// **'Client secret'**
+  String get loginClientSecret;
+
+  /// No description provided for @loginUrlHint.
+  ///
+  /// In en, this message translates to:
+  /// **'https://example.com'**
+  String get loginUrlHint;
+
+  /// No description provided for @loginInvalidUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid URL with a host (e.g. https://example.com).'**
+  String get loginInvalidUrl;
+
+  /// No description provided for @loginFieldRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'This field is required.'**
+  String get loginFieldRequired;
 
   /// No description provided for @connectToFoodie.
   ///
   /// In en, this message translates to:
-  /// **'Connect to Foodie'**
+  /// **'Connect'**
   String get connectToFoodie;
 
   /// No description provided for @connectionFailed.
