@@ -1,0 +1,33 @@
+{
+  "@@locale": "en",
+  "appTitle": "JMIX Viewer",
+  "splashLoading": "Loading…",
+  "loginTitle": "Sign in",
+  "welcomeBack": "Welcome back",
+  "loginBody": "Connect to Foodie using OAuth2 client credentials. The app requests an access token, then sends it as Authorization: Bearer on API calls.",
+  "connectToFoodie": "Connect to Foodie",
+  "connectionFailed": "Connection failed: {error}",
+  "@connectionFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "homeTitle": "JMIX Viewer",
+  "settingsTooltip": "Settings",
+  "connectedToFoodie": "Connected to Foodie",
+  "signedInBody": "You are signed in. Access token is active for API calls.",
+  "settingsTitle": "Settings",
+  "appearanceSection": "Appearance",
+  "themeOption": "Theme",
+  "themeSubtitle": "Choose how the app follows your device or uses a fixed light or dark look.",
+  "themeSheetTitle": "Theme",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "themeSystemDesc": "Match your device light or dark mode",
+  "themeLightDesc": "Always use light appearance",
+  "themeDarkDesc": "Always use dark appearance",
+  "signOut": "Sign out"
+}
