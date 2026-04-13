@@ -167,6 +167,7 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
   late Map<String, dynamic> _row;
   bool _editing = false;
   bool _saving = false;
+  bool _deleting = false;
   /// True after a successful save; passed to [HomePage] on pop to refresh the list.
   bool _entitySavedSuccessfully = false;
   final Map<String, TextEditingController> _controllers = {};
@@ -351,7 +352,7 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
       }
       return;
     }
-    if (_saving) return;
+    if (_saving || _deleting) return;
     final entityId = _entityIdForRestPath(_row);
     if (entityId == null) return;
     try {
@@ -369,6 +370,63 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Refresh failed: $e')),
       );
+    }
+  }
+
+  Future<void> _confirmDelete(AppLocalizations l10n) async {
+    final entityId = _entityIdForRestPath(_row);
+    if (entityId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.entityRecordMissingId)),
+      );
+      return;
+    }
+
+    final theme = Theme.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(l10n.entityRecordDeleteConfirmTitle),
+          content: Text(l10n.entityRecordDeleteConfirmMessage),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(l10n.entityRecordCancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: TextButton.styleFrom(
+                foregroundColor: theme.colorScheme.error,
+              ),
+              child: Text(l10n.entityRecordDeleteConfirmButton),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _deleting = true);
+    try {
+      await BusinessOps.run(
+        'entityRecord.delete',
+        () => ref.read(jmixRestConnectorProvider).deleteEntity(
+              widget.args.entityName,
+              entityId,
+            ),
+      );
+      if (!mounted) return;
+      context.pop(true);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.entityRecordDeleteFailed('$e'))),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _deleting = false);
+      }
     }
   }
 
@@ -500,13 +558,32 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
-          if (!_editing)
+          if (!_editing) ...[
+            if (_entityIdForRestPath(_row) != null)
+              IconButton(
+                icon: _deleting
+                    ? SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: colorScheme.onSurface,
+                        ),
+                      )
+                    : const Icon(Icons.delete_outline),
+                tooltip: l10n.entityRecordDeleteTooltip,
+                onPressed: (_saving || _deleting)
+                    ? null
+                    : () => _confirmDelete(l10n),
+              ),
             IconButton(
               icon: const Icon(Icons.edit),
               tooltip: l10n.entityRecordEdit,
-              onPressed: _saving ? null : () => _startEdit(orderedKeys),
-            )
-          else ...[
+              onPressed: (_saving || _deleting)
+                  ? null
+                  : () => _startEdit(orderedKeys),
+            ),
+          ] else ...[
             TextButton(
               onPressed: _saving ? null : _exitEdit,
               child: Text(l10n.entityRecordCancel),
