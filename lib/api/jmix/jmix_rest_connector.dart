@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:http_parser/http_parser.dart';
 
+import '../../logging/app_logger.dart';
 import 'jmix_api_exception.dart';
 import 'jmix_client_config.dart';
 import 'models/jmix_entity_list_result.dart';
@@ -37,6 +38,7 @@ class JmixRestConnector {
         responseType: ResponseType.json,
       );
     }
+    _dio.interceptors.add(HttpRequestUrlInterceptor());
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
