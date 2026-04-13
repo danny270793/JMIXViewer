@@ -33,11 +33,17 @@ abstract final class AppLogger {
     _emit(stack.toString());
   }
 
-  /// Logs the resolved URL for an outgoing Dio request (method + full URI).
-  static void logHttpRequest(RequestOptions options) {
+  /// Logs a completed Dio call: status, duration, method, full URI (debug only).
+  static void logHttpCompleted({
+    required int? statusCode,
+    required int elapsedMs,
+    required String method,
+    required Uri uri,
+  }) {
     if (!kDebugMode) return;
-    final method = options.method.toUpperCase();
-    _emit('[HTTP] $method ${options.uri}');
+    final m = method.toUpperCase();
+    final code = statusCode?.toString() ?? '—';
+    _emit('[HTTP] $code ${elapsedMs}ms $m $uri');
   }
 
   /// Logs a navigation event: [type] (push, pop, replace, remove) and path from → to.
@@ -59,11 +65,37 @@ abstract final class AppLogger {
   }
 }
 
-/// Attaches to Dio: logs each request URL in debug mode only.
+/// Attaches to Dio: logs status, elapsed time, method, and URL after each call.
 final class HttpRequestUrlInterceptor extends Interceptor {
+  static const _kStopwatch = '__appLoggerHttpSw';
+
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    AppLogger.logHttpRequest(options);
+    options.extra[_kStopwatch] = Stopwatch()..start();
     handler.next(options);
+  }
+
+  @override
+  void onResponse(Response<dynamic> response, ResponseInterceptorHandler handler) {
+    _emitFor(response.requestOptions, response.statusCode);
+    handler.next(response);
+  }
+
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) {
+    _emitFor(err.requestOptions, err.response?.statusCode);
+    handler.next(err);
+  }
+
+  void _emitFor(RequestOptions options, int? statusCode) {
+    final sw = options.extra[_kStopwatch] as Stopwatch?;
+    sw?.stop();
+    final ms = sw?.elapsedMilliseconds ?? 0;
+    AppLogger.logHttpCompleted(
+      statusCode: statusCode,
+      elapsedMs: ms,
+      method: options.method,
+      uri: options.uri,
+    );
   }
 }
