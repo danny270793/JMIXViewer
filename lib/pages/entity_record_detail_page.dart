@@ -254,24 +254,16 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
 
     setState(() => _saving = true);
     try {
-      final latest = await BusinessOps.run(
-        'entityRecord.load',
-        () => ref.read(jmixRestConnectorProvider).loadEntity(
-              widget.args.entityName,
-              entityId,
-            ),
-      );
-
       final body = <String, dynamic>{};
       for (final k in keys) {
         try {
           final meta = _metaFor(k);
           if (k == 'id') {
-            body[k] = latest[k] ?? _row[k];
+            body[k] = _row[k];
             continue;
           }
           if (meta.kind == AttributeInputKind.readOnlyDisplay) {
-            body[k] = latest[k] ?? _row[k];
+            body[k] = _row[k];
             continue;
           }
           final original = _row[k];
@@ -293,8 +285,8 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
         }
       }
 
-      if (latest.containsKey('version')) {
-        body['version'] = latest['version'];
+      if (_row.containsKey('version')) {
+        body['version'] = _row['version'];
       }
 
       final updated = await BusinessOps.run(
@@ -306,9 +298,24 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
             ),
       );
       if (!mounted) return;
+
+      Map<String, dynamic> refreshed;
+      try {
+        refreshed = await BusinessOps.run(
+          'entityRecord.load',
+          () => ref.read(jmixRestConnectorProvider).loadEntity(
+                widget.args.entityName,
+                entityId,
+              ),
+        );
+      } catch (_) {
+        refreshed = Map<String, dynamic>.from(updated);
+      }
+
+      if (!mounted) return;
       _disposeControllers();
       setState(() {
-        _row = Map<String, dynamic>.from(updated);
+        _row = refreshed;
         _editing = false;
         _propertyByName = null;
       });
