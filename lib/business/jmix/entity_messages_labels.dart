@@ -114,3 +114,53 @@ List<String> entityRecordRestKeys(
       .where((k) => k != kJmixInstanceNameField)
       .toList(growable: false);
 }
+
+/// Property `name` values from entity metadata, sorted by [attributeSortKey].
+List<String> entityMetadataPropertyNamesSorted(
+  Map<String, dynamic> entityMetadata,
+  String entityName,
+  Map<String, dynamic> allEntityMessages,
+  Map<String, dynamic>? fieldMessagesForEntity,
+) {
+  final props = entityMetadata['properties'];
+  final names = <String>[];
+  if (props is List) {
+    for (final p in props) {
+      if (p is Map<String, dynamic>) {
+        final n = p['name'];
+        if (n is String && n.isNotEmpty) names.add(n);
+      }
+    }
+  }
+  names.sort(
+    (a, b) => attributeSortKey(
+          a,
+          entityName,
+          allEntityMessages,
+          fieldMessagesForEntity,
+        ).compareTo(
+          attributeSortKey(
+            b,
+            entityName,
+            allEntityMessages,
+            fieldMessagesForEntity,
+          ),
+        ),
+  );
+  return names;
+}
+
+/// True if [entityMetadata] `properties` contains [propertyName].
+bool entityMetadataHasProperty(
+  Map<String, dynamic> entityMetadata,
+  String propertyName,
+) {
+  final props = entityMetadata['properties'];
+  if (props is! List) return false;
+  for (final p in props) {
+    if (p is Map<String, dynamic> && p['name'] == propertyName) {
+      return true;
+    }
+  }
+  return false;
+}
