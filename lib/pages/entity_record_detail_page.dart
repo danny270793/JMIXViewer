@@ -196,6 +196,7 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
       fieldName: key,
       property: prop,
       currentValue: _row[key],
+      entityMetadataAvailable: _propertyByName != null,
     );
   }
 
@@ -217,6 +218,7 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
         fieldName: k,
         property: props?[k],
         currentValue: _row[k],
+        entityMetadataAvailable: props != null,
       );
       final v = _row[k];
       if (k == 'id' || m.kind == AttributeInputKind.readOnlyDisplay) {
