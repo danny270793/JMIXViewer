@@ -2,36 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../auth/foodie_session.dart';
+import '../l10n/app_localizations.dart';
 import '../router/app_router.dart';
 import '../theme/theme_controller.dart';
+
+String _themeShortLabel(AppLocalizations l10n, ThemeMode mode) {
+  return switch (mode) {
+    ThemeMode.system => l10n.themeSystem,
+    ThemeMode.light => l10n.themeLight,
+    ThemeMode.dark => l10n.themeDark,
+  };
+}
+
+String _themeOptionTitle(AppLocalizations l10n, ThemeMode mode) {
+  return switch (mode) {
+    ThemeMode.system => l10n.themeSystem,
+    ThemeMode.light => l10n.themeLight,
+    ThemeMode.dark => l10n.themeDark,
+  };
+}
+
+String _themeOptionDescription(AppLocalizations l10n, ThemeMode mode) {
+  return switch (mode) {
+    ThemeMode.system => l10n.themeSystemDesc,
+    ThemeMode.light => l10n.themeLightDesc,
+    ThemeMode.dark => l10n.themeDarkDesc,
+  };
+}
 
 /// App settings.
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
-
-  static String _themeShortLabel(ThemeMode mode) {
-    return switch (mode) {
-      ThemeMode.system => 'System',
-      ThemeMode.light => 'Light',
-      ThemeMode.dark => 'Dark',
-    };
-  }
-
-  static String _themeOptionTitle(ThemeMode mode) {
-    return switch (mode) {
-      ThemeMode.system => 'System',
-      ThemeMode.light => 'Light',
-      ThemeMode.dark => 'Dark',
-    };
-  }
-
-  static String _themeOptionDescription(ThemeMode mode) {
-    return switch (mode) {
-      ThemeMode.system => 'Match your device light or dark mode',
-      ThemeMode.light => 'Always use light appearance',
-      ThemeMode.dark => 'Always use dark appearance',
-    };
-  }
 
   void _showThemeBottomSheet(BuildContext context) {
     final theme = Theme.of(context);
@@ -49,6 +50,7 @@ class SettingsPage extends StatelessWidget {
             listenable: themeController,
             builder: (context, _) {
               final selected = themeController.themeMode;
+              final sheetL10n = AppLocalizations.of(sheetContext);
               return SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -57,7 +59,7 @@ class SettingsPage extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
                       child: Text(
-                        'Theme',
+                        sheetL10n.themeSheetTitle,
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
@@ -65,9 +67,9 @@ class SettingsPage extends StatelessWidget {
                     ),
                     for (final mode in ThemeMode.values)
                       ListTile(
-                        title: Text(_themeOptionTitle(mode)),
+                        title: Text(_themeOptionTitle(sheetL10n, mode)),
                         subtitle: Text(
-                          _themeOptionDescription(mode),
+                          _themeOptionDescription(sheetL10n, mode),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: colorScheme.onSurfaceVariant,
                           ),
@@ -97,10 +99,11 @@ class SettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: Text(l10n.settingsTitle),
       ),
       body: Column(
         children: [
@@ -109,7 +112,7 @@ class SettingsPage extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               children: [
                 Text(
-                  'Appearance',
+                  l10n.appearanceSection,
                   style: textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -121,9 +124,9 @@ class SettingsPage extends StatelessWidget {
                     final mode = themeController.themeMode;
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('Theme'),
+                      title: Text(l10n.themeOption),
                       subtitle: Text(
-                        'Choose how the app follows your device or uses a fixed light or dark look.',
+                        l10n.themeSubtitle,
                         style: textTheme.bodyMedium?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
@@ -132,7 +135,7 @@ class SettingsPage extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            _themeShortLabel(mode),
+                            _themeShortLabel(l10n, mode),
                             style: textTheme.titleMedium?.copyWith(
                               color: colorScheme.primary,
                               fontWeight: FontWeight.w500,
@@ -167,7 +170,7 @@ class SettingsPage extends StatelessWidget {
                   side: BorderSide(color: colorScheme.error),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                child: const Text('Sign out'),
+                child: Text(l10n.signOut),
               ),
             ),
           ),
