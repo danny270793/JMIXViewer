@@ -38,5 +38,26 @@
   "languageSpanish": "Español",
   "languageSystemDesc": "Usar el idioma del dispositivo si la app lo admite",
   "languageEnglishDesc": "Mostrar siempre la interfaz en inglés",
-  "languageSpanishDesc": "Mostrar siempre la interfaz en español"
+  "languageSpanishDesc": "Mostrar siempre la interfaz en español",
+  "entityRecordEdit": "Editar",
+  "entityRecordSave": "Guardar",
+  "entityRecordCancel": "Cancelar",
+  "entityRecordMissingId": "No se puede guardar: este registro no tiene id.",
+  "entityRecordFieldInvalid": "Valor no válido para «{field}».",
+  "@entityRecordFieldInvalid": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "entityRecordSaveSuccess": "Registro actualizado.",
+  "entityRecordSaveFailed": "Error al guardar: {error}",
+  "@entityRecordSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  }
 }
