@@ -83,6 +83,27 @@ abstract final class AppLogger {
     }
   }
 
+  /// Debug: logs response body when Dio fails ([DioException]) — e.g. 5xx or transport errors.
+  static void logHttpErrorResponseBody(DioException err) {
+    if (!kDebugMode) return;
+    final data = err.response?.data;
+    if (data == null) return;
+    final uri = err.requestOptions.uri;
+    final formatted = _formatHttpRequestBodyForLog(data);
+    if (formatted.isNotEmpty) {
+      _emit('[HTTP] error response body for $uri:\n$formatted');
+    }
+  }
+
+  /// Debug: logs body when status is not 2xx but Dio still returned a [Response] (e.g. 4xx).
+  static void logHttpNonSuccessResponseBody(Uri uri, dynamic data) {
+    if (!kDebugMode) return;
+    final formatted = _formatHttpRequestBodyForLog(data);
+    if (formatted.isNotEmpty) {
+      _emit('[HTTP] response body (non-success) $uri:\n$formatted');
+    }
+  }
+
   static String _truncateHttpLog(String s, [int maxChars = 32000]) {
     if (s.length <= maxChars) return s;
     return '${s.substring(0, maxChars)}… (${s.length} chars total)';
@@ -126,6 +147,7 @@ final class HttpRequestUrlInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     _emitFor(err.requestOptions, err.response?.statusCode);
+    AppLogger.logHttpErrorResponseBody(err);
     handler.next(err);
   }
 
