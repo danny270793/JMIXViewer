@@ -174,10 +174,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get homeEntityListSortTooltip => 'Sort list';
+  String get homeEntityListSortTooltip => 'Sort';
 
   @override
-  String get homeEntityListSortTitle => 'Sort list';
+  String get homeEntityListSortTitle => 'Sort';
 
   @override
   String get homeEntityListSortField => 'Sort by';
@@ -204,7 +204,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeEntityListSortNoFields => 'No fields available for sorting.';
 
   @override
-  String get homeEntityListSearchTooltip => 'Search list';
+  String get homeEntityListSearchTooltip => 'Search';
 
   @override
   String get homeEntityListSearchTitle => 'Search';
