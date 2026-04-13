@@ -138,8 +138,8 @@ class HomePage extends ConsumerWidget {
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
                 onPressed: () {
-              ref.read(homeSelectionProvider.notifier).clear();
-            },
+                  ref.read(homeSelectionProvider.notifier).clear();
+                },
               )
             : null,
         title: Text(
@@ -151,10 +151,7 @@ class HomePage extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: l10n.settingsTooltip,
-            onPressed: () {
-              AppLogger.logUserAction('home.openSettings');
-              context.push(AppRoutes.settings);
-            },
+            onPressed: () => context.push(AppRoutes.settings),
           ),
         ],
       ),
