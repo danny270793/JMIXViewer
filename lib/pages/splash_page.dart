@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../l10n/app_localizations.dart';
 import '../router/app_router.dart';
 
 /// First screen: shows branding and a loader, then navigates to login.
@@ -31,6 +32,7 @@ class _SplashPageState extends State<SplashPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       body: DecoratedBox(
@@ -56,7 +58,7 @@ class _SplashPageState extends State<SplashPage> {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'JMIX Viewer',
+                  l10n.appTitle,
                   style: theme.textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: colorScheme.onSurface,
@@ -64,7 +66,7 @@ class _SplashPageState extends State<SplashPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Loading…',
+                  l10n.splashLoading,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
