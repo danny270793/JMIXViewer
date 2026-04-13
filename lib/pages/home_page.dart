@@ -8,6 +8,17 @@ import '../auth/foodie_session.dart';
 import '../l10n/app_localizations.dart';
 import '../router/app_router.dart';
 
+/// Metadata list plus `messages/entities` map (entity or property name → localized text).
+final class _DrawerEntityData {
+  const _DrawerEntityData({
+    required this.metadata,
+    required this.messages,
+  });
+
+  final List<Map<String, dynamic>> metadata;
+  final Map<String, dynamic> messages;
+}
+
 /// Shown after a successful Foodie / Jmix sign-in.
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -19,7 +30,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   static const int _pageSize = 20;
 
-  late final Future<List<Map<String, dynamic>>> _entitiesFuture;
+  late final Future<_DrawerEntityData> _entitiesFuture;
 
   String? _selectedEntityName;
   int _pageIndex = 0;
@@ -28,7 +39,21 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _entitiesFuture = FoodieSession.instance.rest.metadataListEntities();
+    _entitiesFuture = _loadDrawerEntityData();
+  }
+
+  /// Loads entity metadata and localized labels (`GET messages/entities`) in parallel.
+  Future<_DrawerEntityData> _loadDrawerEntityData() async {
+    final results = await Future.wait<Object>([
+      FoodieSession.instance.rest.metadataListEntities(),
+      FoodieSession.instance.rest.messagesEntities().catchError(
+            (_) => <String, dynamic>{},
+          ),
+    ]);
+    return _DrawerEntityData(
+      metadata: results[0] as List<Map<String, dynamic>>,
+      messages: Map<String, dynamic>.from(results[1] as Map),
+    );
   }
 
   void _closeDrawer(BuildContext context) {
@@ -102,7 +127,7 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
-              FutureBuilder<List<Map<String, dynamic>>>(
+              FutureBuilder<_DrawerEntityData>(
                 future: _entitiesFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -131,7 +156,9 @@ class _HomePageState extends State<HomePage> {
                       ),
                     );
                   }
-                  final list = snapshot.data ?? const [];
+                  final data = snapshot.data!;
+                  final list = data.metadata;
+                  final messages = data.messages;
                   if (list.isEmpty) {
                     return ListTile(
                       dense: true,
@@ -144,8 +171,14 @@ class _HomePageState extends State<HomePage> {
                     );
                   }
                   final sorted = [...list]..sort(
-                        (a, b) => _entityDisplayName(a).compareTo(
-                              _entityDisplayName(b),
+                        (a, b) => _sidebarLabel(
+                              _entityDisplayName(a),
+                              messages,
+                            ).compareTo(
+                              _sidebarLabel(
+                                _entityDisplayName(b),
+                                messages,
+                              ),
                             ),
                       );
                   return Column(
@@ -155,7 +188,10 @@ class _HomePageState extends State<HomePage> {
                         ListTile(
                           dense: true,
                           title: Text(
-                            _entityDisplayName(meta),
+                            _sidebarLabel(
+                              _entityDisplayName(meta),
+                              messages,
+                            ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -382,6 +418,21 @@ class _HomePageState extends State<HomePage> {
     final name = meta['entityName'];
     if (name is String && name.isNotEmpty) return name;
     return '?';
+  }
+
+  /// Localized caption from [messages] for [entityName], if present (see `GET messages/entities`).
+  String? _messageCaption(String entityName, Map<String, dynamic> messages) {
+    final v = messages[entityName];
+    if (v is String && v.trim().isNotEmpty) return v;
+    return null;
+  }
+
+  /// Sidebar line: localized caption, or [entityName] if missing; if caption differs, `"Caption (entityName)"`.
+  String _sidebarLabel(String entityName, Map<String, dynamic> messages) {
+    final caption = _messageCaption(entityName, messages);
+    if (caption == null) return entityName;
+    if (caption == entityName) return caption;
+    return '$caption ($entityName)';
   }
 }
 
