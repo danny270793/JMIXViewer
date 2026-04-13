@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../auth/foodie_session.dart';
 import '../l10n/app_localizations.dart';
+import '../l10n/locale_controller.dart';
 import '../router/app_router.dart';
 import '../theme/theme_controller.dart';
 
@@ -30,9 +31,90 @@ String _themeOptionDescription(AppLocalizations l10n, ThemeMode mode) {
   };
 }
 
+String _localeShortLabel(AppLocalizations l10n, AppLocalePreference pref) {
+  return switch (pref) {
+    AppLocalePreference.system => l10n.languageSystem,
+    AppLocalePreference.english => l10n.languageEnglish,
+    AppLocalePreference.spanish => l10n.languageSpanish,
+  };
+}
+
+String _localeOptionTitle(AppLocalizations l10n, AppLocalePreference pref) {
+  return _localeShortLabel(l10n, pref);
+}
+
+String _localeOptionDescription(AppLocalizations l10n, AppLocalePreference pref) {
+  return switch (pref) {
+    AppLocalePreference.system => l10n.languageSystemDesc,
+    AppLocalePreference.english => l10n.languageEnglishDesc,
+    AppLocalePreference.spanish => l10n.languageSpanishDesc,
+  };
+}
+
 /// App settings.
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
+
+  void _showLanguageBottomSheet(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: ListenableBuilder(
+            listenable: localeController,
+            builder: (context, _) {
+              final selected = localeController.preference;
+              final sheetL10n = AppLocalizations.of(sheetContext);
+              return SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                      child: Text(
+                        sheetL10n.languageSheetTitle,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    for (final pref in AppLocalePreference.values)
+                      ListTile(
+                        title: Text(_localeOptionTitle(sheetL10n, pref)),
+                        subtitle: Text(
+                          _localeOptionDescription(sheetL10n, pref),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        trailing: selected == pref
+                            ? Icon(Icons.check, color: colorScheme.primary)
+                            : null,
+                        onTap: () async {
+                          await localeController.setPreference(pref);
+                          if (sheetContext.mounted) {
+                            Navigator.of(sheetContext).pop();
+                          }
+                        },
+                      ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
 
   void _showThemeBottomSheet(BuildContext context) {
     final theme = Theme.of(context);
@@ -149,6 +231,48 @@ class SettingsPage extends StatelessWidget {
                         ],
                       ),
                       onTap: () => _showThemeBottomSheet(context),
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  l10n.languageSection,
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                ListenableBuilder(
+                  listenable: localeController,
+                  builder: (context, _) {
+                    final pref = localeController.preference;
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(l10n.languageOption),
+                      subtitle: Text(
+                        l10n.languageSubtitle,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _localeShortLabel(l10n, pref),
+                            style: textTheme.titleMedium?.copyWith(
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.chevron_right,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ],
+                      ),
+                      onTap: () => _showLanguageBottomSheet(context),
                     );
                   },
                 ),
