@@ -236,16 +236,10 @@ abstract class AppLocalizations {
   /// **'Sign out'**
   String get signOut;
 
-  /// No description provided for @languageSection.
-  ///
-  /// In en, this message translates to:
-  /// **'Language'**
-  String get languageSection;
-
   /// No description provided for @languageOption.
   ///
   /// In en, this message translates to:
-  /// **'App language'**
+  /// **'Language'**
   String get languageOption;
 
   /// No description provided for @languageSubtitle.
@@ -257,7 +251,7 @@ abstract class AppLocalizations {
   /// No description provided for @languageSheetTitle.
   ///
   /// In en, this message translates to:
-  /// **'App language'**
+  /// **'Language'**
   String get languageSheetTitle;
 
   /// No description provided for @languageSystem.

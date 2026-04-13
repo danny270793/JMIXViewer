@@ -83,17 +83,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signOut => 'Sign out';
 
   @override
-  String get languageSection => 'Language';
-
-  @override
-  String get languageOption => 'App language';
+  String get languageOption => 'Language';
 
   @override
   String get languageSubtitle =>
       'Match your device or choose English or Spanish for the interface.';
 
   @override
-  String get languageSheetTitle => 'App language';
+  String get languageSheetTitle => 'Language';
 
   @override
   String get languageSystem => 'System';
