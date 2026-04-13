@@ -94,7 +94,7 @@ dynamic _parseEditableValue({
     case AttributeInputKind.readOnlyDisplay:
       return original;
     case AttributeInputKind.boolean:
-      return boolValue ?? original;
+      return boolValue;
     case AttributeInputKind.enumDropdown:
       return enumValue;
     case AttributeInputKind.referenceManyToOne:
@@ -103,6 +103,7 @@ dynamic _parseEditableValue({
       return <String, dynamic>{'id': t};
     case AttributeInputKind.plainString:
     case AttributeInputKind.multilineString:
+      if (text.trim().isEmpty) return null;
       return text;
     case AttributeInputKind.integer:
       final t = text.trim();
@@ -168,7 +169,7 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
   /// True after a successful save; passed to [HomePage] on pop to refresh the list.
   bool _entitySavedSuccessfully = false;
   final Map<String, TextEditingController> _controllers = {};
-  final Map<String, bool> _boolValues = {};
+  final Map<String, bool?> _boolValues = {};
   final Map<String, String?> _enumValues = {};
   Map<String, Map<String, dynamic>>? _propertyByName;
 
@@ -228,7 +229,7 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
         continue;
       }
       if (m.kind == AttributeInputKind.boolean) {
-        _boolValues[k] = v == true;
+        _boolValues[k] = v is bool ? v : null;
       } else if (m.kind == AttributeInputKind.enumDropdown) {
         _enumValues[k] = _enumStoredId(v);
       } else {
@@ -503,9 +504,9 @@ class _AttributeEditor extends ConsumerWidget {
   final ThemeData theme;
   final ColorScheme colorScheme;
   final Map<String, TextEditingController> controllers;
-  final Map<String, bool> boolValues;
+  final Map<String, bool?> boolValues;
   final Map<String, String?> enumValues;
-  final void Function(String key, bool value) onBoolChanged;
+  final void Function(String key, bool? value) onBoolChanged;
   final void Function(String key, String? value) onEnumChanged;
 
   InputDecoration _decoration() {
@@ -533,12 +534,38 @@ class _AttributeEditor extends ConsumerWidget {
 
     switch (meta.kind) {
       case AttributeInputKind.boolean:
-        return Align(
-          alignment: Alignment.centerLeft,
-          child: Switch(
-            value: boolValues[fieldKey] ?? (value == true),
-            onChanged: (v) => onBoolChanged(fieldKey, v),
-          ),
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: InputDecorator(
+                decoration: _decoration(),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<bool?>(
+                    isExpanded: true,
+                    value: boolValues[fieldKey],
+                    hint: const Text('—'),
+                    items: const [
+                      DropdownMenuItem<bool?>(
+                        value: true,
+                        child: Text('true'),
+                      ),
+                      DropdownMenuItem<bool?>(
+                        value: false,
+                        child: Text('false'),
+                      ),
+                    ],
+                    onChanged: (v) => onBoolChanged(fieldKey, v),
+                  ),
+                ),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.close),
+              tooltip: 'Clear',
+              onPressed: () => onBoolChanged(fieldKey, null),
+            ),
+          ],
         );
       case AttributeInputKind.enumDropdown:
         final name = meta.enumClassName;
@@ -571,27 +598,39 @@ class _AttributeEditor extends ConsumerWidget {
             if (effectiveValue == null && ids.length == 1) {
               effectiveValue = ids.first;
             }
-            return InputDecorator(
-              decoration: _decoration(),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  isExpanded: true,
-                  value: effectiveValue,
-                  hint: const Text('—'),
-                  items: [
-                    for (final e in list)
-                      if (e['id'] != null)
-                        DropdownMenuItem<String>(
-                          value: e['id'].toString(),
-                          child: Text(
-                            '${e['caption'] ?? e['name'] ?? e['id']}',
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                  ],
-                  onChanged: (v) => onEnumChanged(fieldKey, v),
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: InputDecorator(
+                    decoration: _decoration(),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        value: effectiveValue,
+                        hint: const Text('—'),
+                        items: [
+                          for (final e in list)
+                            if (e['id'] != null)
+                              DropdownMenuItem<String>(
+                                value: e['id'].toString(),
+                                child: Text(
+                                  '${e['caption'] ?? e['name'] ?? e['id']}',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                        ],
+                        onChanged: (v) => onEnumChanged(fieldKey, v),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  tooltip: 'Clear',
+                  onPressed: () => onEnumChanged(fieldKey, null),
+                ),
+              ],
             );
           },
           loading: () => const LinearProgressIndicator(minHeight: 2),
@@ -694,16 +733,30 @@ class _AttributeEditor extends ConsumerWidget {
         ),
       );
     }
-    return TextField(
-      controller: controller,
-      style: theme.textTheme.bodyLarge?.copyWith(
-        color: colorScheme.onSurface,
-        height: maxLines > 1 ? null : 1.35,
-      ),
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      inputFormatters: formatters,
-      decoration: _decoration().copyWith(hintText: hint),
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: controller,
+      builder: (context, value, _) {
+        return TextField(
+          controller: controller,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            color: colorScheme.onSurface,
+            height: maxLines > 1 ? null : 1.35,
+          ),
+          keyboardType: keyboardType,
+          maxLines: maxLines,
+          inputFormatters: formatters,
+          decoration: _decoration().copyWith(
+            hintText: hint,
+            suffixIcon: value.text.isEmpty
+                ? null
+                : IconButton(
+                    icon: const Icon(Icons.close, size: 20),
+                    tooltip: 'Clear',
+                    onPressed: () => controller.clear(),
+                  ),
+          ),
+        );
+      },
     );
   }
 
@@ -746,6 +799,11 @@ class _AttributeEditor extends ConsumerWidget {
               c.text = DateFormat('yyyy-MM-dd').format(d);
             }
           },
+        ),
+        IconButton(
+          icon: const Icon(Icons.close),
+          tooltip: 'Clear',
+          onPressed: () => c.clear(),
         ),
       ],
     );
@@ -800,6 +858,13 @@ class _AttributeEditor extends ConsumerWidget {
           icon: const Icon(Icons.event),
           onPressed: () => _pickDateTimeValue(context),
         ),
+        IconButton(
+          icon: const Icon(Icons.close),
+          tooltip: 'Clear',
+          onPressed: () {
+            c.clear();
+          },
+        ),
       ],
     );
   }
@@ -843,6 +908,11 @@ class _AttributeEditor extends ConsumerWidget {
                   '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}:00';
             }
           },
+        ),
+        IconButton(
+          icon: const Icon(Icons.close),
+          tooltip: 'Clear',
+          onPressed: () => c.clear(),
         ),
       ],
     );
