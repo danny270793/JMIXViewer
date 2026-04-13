@@ -59,5 +59,15 @@
         "type": "String"
       }
     }
-  }
+  },
+  "homeEntityListSortTooltip": "Sort list",
+  "homeEntityListSortTitle": "Sort list",
+  "homeEntityListSortField": "Sort by",
+  "homeEntityListSortOrder": "Order",
+  "homeEntityListSortAscending": "Ascending",
+  "homeEntityListSortDescending": "Descending",
+  "homeEntityListSortDefaultOrder": "Default order",
+  "homeEntityListSortApply": "Apply",
+  "homeEntityListSortLoadingFields": "Loading fields…",
+  "homeEntityListSortNoFields": "No fields available for sorting."
 }
