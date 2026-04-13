@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../business/jmix/entity_list_pagination.dart';
 import '../business/jmix/entity_list_search.dart';
+import '../business/jmix/entity_list_search_operators.dart';
 import '../business/jmix/entity_messages_labels.dart';
 import '../business/jmix/entity_record_collapse_titles.dart';
 import '../l10n/app_localizations.dart';
@@ -283,7 +284,7 @@ class HomePage extends ConsumerWidget {
         final entityName = selection.selectedEntityName!;
         final activeSearch = ref.watch(entityListSearchProvider);
         final listKey =
-            '${entityName}_${activeSearch?.fieldKey ?? ''}_${activeSearch?.query ?? ''}';
+            '${entityName}_${activeSearch?.fieldKey ?? ''}_${activeSearch?.op ?? ''}_${activeSearch?.query ?? ''}';
 
         if (items.isEmpty) {
           return LayoutBuilder(
@@ -382,6 +383,7 @@ class _EntityListSearchSheet extends ConsumerStatefulWidget {
 class _EntityListSearchSheetState extends ConsumerState<_EntityListSearchSheet> {
   late final TextEditingController _queryController;
   String? _fieldChoice;
+  String? _opChoice;
 
   @override
   void initState() {
@@ -389,6 +391,9 @@ class _EntityListSearchSheetState extends ConsumerState<_EntityListSearchSheet> 
     final i = widget.initialSearch;
     _queryController = TextEditingController(text: i?.query ?? '');
     _fieldChoice = i?.fieldKey;
+    final o = i?.op;
+    _opChoice =
+        o != null && kEntityListSearchOperators.contains(o) ? o : null;
   }
 
   @override
@@ -401,6 +406,14 @@ class _EntityListSearchSheetState extends ConsumerState<_EntityListSearchSheet> 
     final prefer = _fieldChoice ?? current?.fieldKey;
     if (prefer != null && keys.contains(prefer)) return prefer;
     return keys.first;
+  }
+
+  String _resolvedOp(EntityListSearch? current) {
+    final prefer = _opChoice ?? current?.op;
+    if (prefer != null && kEntityListSearchOperators.contains(prefer)) {
+      return prefer;
+    }
+    return 'contains';
   }
 
   List<String> _fieldKeys() {
@@ -519,15 +532,48 @@ class _EntityListSearchSheetState extends ConsumerState<_EntityListSearchSheet> 
                   ),
                 ),
                 const SizedBox(height: 16),
-                TextField(
-                  controller: _queryController,
-                  decoration: InputDecoration(
-                    border: const OutlineInputBorder(),
-                    hintText: l10n.homeEntityListSearchQueryHint,
+                Text(
+                  l10n.homeEntityListSearchOperator,
+                  style: theme.textTheme.labelLarge,
+                ),
+                const SizedBox(height: 8),
+                InputDecorator(
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
                     isDense: true,
                   ),
-                  textInputAction: TextInputAction.search,
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      value: _resolvedOp(current),
+                      items: [
+                        for (final op in kEntityListSearchOperators)
+                          DropdownMenuItem<String>(
+                            value: op,
+                            child: Text(op),
+                          ),
+                      ],
+                      onChanged: (v) {
+                        if (v != null) setState(() => _opChoice = v);
+                      },
+                    ),
+                  ),
                 ),
+                const SizedBox(height: 16),
+                if (entityListSearchOperatorNeedsValue(_resolvedOp(current))) ...[
+                  TextField(
+                    controller: _queryController,
+                    decoration: InputDecoration(
+                      border: const OutlineInputBorder(),
+                      hintText: _resolvedOp(current) == 'in' ||
+                              _resolvedOp(current) == 'notIn'
+                          ? l10n.homeEntityListSearchValueHintIn
+                          : l10n.homeEntityListSearchQueryHint,
+                      isDense: true,
+                    ),
+                    textInputAction: TextInputAction.search,
+                  ),
+                ],
                 const SizedBox(height: 20),
                 Row(
                   children: [
@@ -541,11 +587,26 @@ class _EntityListSearchSheetState extends ConsumerState<_EntityListSearchSheet> 
                     const Spacer(),
                     FilledButton(
                       onPressed: () {
-                        ref.read(entityListSearchProvider.notifier).apply(
-                              EntityListSearch(
-                                fieldKey: _resolvedField(keys, current),
-                                query: _queryController.text,
+                        final op = _resolvedOp(current);
+                        final field = _resolvedField(keys, current);
+                        final draft = EntityListSearch(
+                          fieldKey: field,
+                          op: op,
+                          query: _queryController.text,
+                        );
+                        if (entityListSearchOperatorNeedsValue(op) &&
+                            !entityListSearchIsActive(draft)) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                l10n.homeEntityListSearchValueRequired,
                               ),
+                            ),
+                          );
+                          return;
+                        }
+                        ref.read(entityListSearchProvider.notifier).apply(
+                              draft,
                             );
                         Navigator.of(context).pop();
                       },
