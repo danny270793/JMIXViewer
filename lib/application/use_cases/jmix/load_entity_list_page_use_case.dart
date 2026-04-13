@@ -3,6 +3,7 @@ import '../../../api/jmix/models/jmix_entity_list_result.dart';
 import '../../../business/jmix/entity_list_pagination.dart';
 import '../../../business/jmix/entity_list_search.dart';
 import '../../../business/jmix/entity_list_search_filter.dart';
+import '../../../business/jmix/entity_list_search_operators.dart';
 import '../../business_use_case.dart';
 
 /// Loads one page of rows for a Jmix generic entity list.
@@ -20,11 +21,14 @@ final class LoadEntityListPageUseCase extends BusinessUseCase {
   }) {
     return run('home.entityList', () async {
       if (entityName == null) return null;
-      final q = search?.query.trim() ?? '';
-      if (search != null && q.isNotEmpty) {
+      if (search != null && entityListSearchIsActive(search)) {
         return _rest.searchEntitiesGet(
           entityName,
-          entityListSearchContainsFilter(search.fieldKey, q),
+          entityListSearchRestFilter(
+            property: search.fieldKey,
+            op: search.op,
+            query: search.query,
+          ),
           limit: '$kDefaultEntityPageSize',
           offset: '${pageIndex * kDefaultEntityPageSize}',
           sort: sort,
