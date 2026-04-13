@@ -159,7 +159,7 @@ class HomePage extends ConsumerWidget {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.sort),
+              icon: const Icon(Icons.swap_vert),
               tooltip: l10n.homeEntityListSortTooltip,
               onPressed: () => _showEntityListSortSheet(
                 context,
