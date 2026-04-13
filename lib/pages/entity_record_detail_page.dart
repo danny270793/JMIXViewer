@@ -255,7 +255,7 @@ class _EntityRecordDetailPageState extends ConsumerState<EntityRecordDetailPage>
     setState(() => _saving = true);
     try {
       final latest = await BusinessOps.run(
-        'entityRecord.loadBeforeUpdate',
+        'entityRecord.load',
         () => ref.read(jmixRestConnectorProvider).loadEntity(
               widget.args.entityName,
               entityId,
