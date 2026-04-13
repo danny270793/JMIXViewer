@@ -235,6 +235,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign out'**
   String get signOut;
+
+  /// No description provided for @languageSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get languageSection;
+
+  /// No description provided for @languageOption.
+  ///
+  /// In en, this message translates to:
+  /// **'App language'**
+  String get languageOption;
+
+  /// No description provided for @languageSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Match your device or choose English or Spanish for the interface.'**
+  String get languageSubtitle;
+
+  /// No description provided for @languageSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'App language'**
+  String get languageSheetTitle;
+
+  /// No description provided for @languageSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get languageSystem;
+
+  /// No description provided for @languageEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get languageEnglish;
+
+  /// No description provided for @languageSpanish.
+  ///
+  /// In en, this message translates to:
+  /// **'Spanish'**
+  String get languageSpanish;
+
+  /// No description provided for @languageSystemDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Use your device language when the app supports it'**
+  String get languageSystemDesc;
+
+  /// No description provided for @languageEnglishDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Always show the interface in English'**
+  String get languageEnglishDesc;
+
+  /// No description provided for @languageSpanishDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Always show the interface in Spanish'**
+  String get languageSpanishDesc;
 }
 
 class _AppLocalizationsDelegate
