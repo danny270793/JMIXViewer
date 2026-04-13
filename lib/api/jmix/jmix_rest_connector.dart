@@ -506,6 +506,7 @@ class JmixRestConnector {
   void _throwIfError(Response<dynamic> r) {
     final code = r.statusCode ?? 0;
     if (code >= 200 && code < 300) return;
+    AppLogger.logHttpNonSuccessResponseBody(r.requestOptions.uri, r.data);
     final data = r.data;
     if (data is Map<String, dynamic>) {
       if (data.containsKey('details') || data.containsKey('error')) {
