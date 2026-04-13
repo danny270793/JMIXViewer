@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'l10n/app_localizations.dart';
 import 'router/app_router.dart';
 import 'theme/theme_controller.dart';
 
@@ -35,9 +36,12 @@ class MyApp extends StatelessWidget {
       listenable: themeController,
       builder: (context, _) {
         return MaterialApp.router(
-          title: 'JMIX Viewer',
+          onGenerateTitle: (context) =>
+              AppLocalizations.of(context).appTitle,
           debugShowCheckedModeBanner: false,
           routerConfig: appRouter,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           themeMode: themeController.themeMode,
           theme: _lightTheme(),
           darkTheme: _darkTheme(),
