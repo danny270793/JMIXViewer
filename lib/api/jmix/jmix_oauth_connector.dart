@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 
 import 'jmix_api_exception.dart';
@@ -46,6 +48,19 @@ class JmixOAuthConnector {
     return _postToken(body);
   }
 
+  /// Client Credentials grant (RFC 6749). Uses `Authorization: Basic` with
+  /// Base64(`clientId:clientSecret`) and body `grant_type=client_credentials`.
+  Future<JmixToken> obtainTokenWithClientCredentials({
+    required String clientId,
+    required String clientSecret,
+  }) async {
+    final basic = base64Encode(utf8.encode('$clientId:$clientSecret'));
+    return _postToken(
+      {'grant_type': 'client_credentials'},
+      authorizationBasic: basic,
+    );
+  }
+
   /// Refresh token grant.
   Future<JmixToken> refreshToken({
     required String refreshToken,
@@ -63,7 +78,10 @@ class JmixOAuthConnector {
     return _postToken(body);
   }
 
-  Future<JmixToken> _postToken(Map<String, dynamic> body) async {
+  Future<JmixToken> _postToken(
+    Map<String, dynamic> body, {
+    String? authorizationBasic,
+  }) async {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         config.tokenUri.toString(),
@@ -71,6 +89,9 @@ class JmixOAuthConnector {
         options: Options(
           contentType: Headers.formUrlEncodedContentType,
           responseType: ResponseType.json,
+          headers: authorizationBasic != null
+              ? <String, String>{'Authorization': 'Basic $authorizationBasic'}
+              : null,
         ),
       );
       final code = response.statusCode ?? 0;
