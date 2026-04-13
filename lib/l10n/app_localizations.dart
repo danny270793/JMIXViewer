@@ -331,6 +331,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save failed: {error}'**
   String entityRecordSaveFailed(String error);
+
+  /// No description provided for @homeEntityListSortTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort list'**
+  String get homeEntityListSortTooltip;
+
+  /// No description provided for @homeEntityListSortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort list'**
+  String get homeEntityListSortTitle;
+
+  /// No description provided for @homeEntityListSortField.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by'**
+  String get homeEntityListSortField;
+
+  /// No description provided for @homeEntityListSortOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Order'**
+  String get homeEntityListSortOrder;
+
+  /// No description provided for @homeEntityListSortAscending.
+  ///
+  /// In en, this message translates to:
+  /// **'Ascending'**
+  String get homeEntityListSortAscending;
+
+  /// No description provided for @homeEntityListSortDescending.
+  ///
+  /// In en, this message translates to:
+  /// **'Descending'**
+  String get homeEntityListSortDescending;
+
+  /// No description provided for @homeEntityListSortDefaultOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Default order'**
+  String get homeEntityListSortDefaultOrder;
+
+  /// No description provided for @homeEntityListSortApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get homeEntityListSortApply;
+
+  /// No description provided for @homeEntityListSortLoadingFields.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading fields…'**
+  String get homeEntityListSortLoadingFields;
+
+  /// No description provided for @homeEntityListSortNoFields.
+  ///
+  /// In en, this message translates to:
+  /// **'No fields available for sorting.'**
+  String get homeEntityListSortNoFields;
 }
 
 class _AppLocalizationsDelegate
