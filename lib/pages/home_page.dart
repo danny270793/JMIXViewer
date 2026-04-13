@@ -215,10 +215,6 @@ class HomePage extends ConsumerWidget {
           data: (d) => d.messages,
           orElse: () => <String, dynamic>{},
         );
-    final fieldMessages = ref.watch(fieldMessagesForSelectionProvider).maybeWhen(
-          data: (m) => m,
-          orElse: () => null,
-        );
 
     return listAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -294,7 +290,7 @@ class HomePage extends ConsumerWidget {
           items,
           entityName,
           drawerMessages,
-          fieldMessages,
+          null,
         );
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -312,7 +308,7 @@ class HomePage extends ConsumerWidget {
                     colorScheme: colorScheme,
                     entityName: entityName,
                     allEntityMessages: drawerMessages,
-                    fieldMessagesForEntity: fieldMessages,
+                    fieldMessagesForEntity: null,
                   );
                 },
               ),
