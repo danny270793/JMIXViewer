@@ -16,6 +16,7 @@ abstract final class EntityRecordFieldSections {
     'deletedDate',
     'lastModifiedBy',
     'lastModifiedDate',
+    'version',
   ];
 
   static const _frameworkSet = {'_entityName', '_instanceName'};
@@ -26,6 +27,7 @@ abstract final class EntityRecordFieldSections {
     'deletedDate',
     'lastModifiedBy',
     'lastModifiedDate',
+    'version',
   };
 
   /// Splits [orderedKeys] (e.g. from [entityRowColumnKeysSortedByDisplay]) into
