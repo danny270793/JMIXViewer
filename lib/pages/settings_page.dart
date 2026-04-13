@@ -51,6 +51,27 @@ String _localeOptionDescription(AppLocalizations l10n, AppLocalePreference pref)
   };
 }
 
+TextStyle? _settingsRowDescriptionStyle(
+  TextTheme textTheme,
+  ColorScheme colorScheme,
+) {
+  return textTheme.bodySmall?.copyWith(
+    color: colorScheme.onSurfaceVariant,
+    fontSize: (textTheme.bodySmall?.fontSize ?? 12) * 0.92,
+    height: 1.35,
+  );
+}
+
+TextStyle? _sheetOptionDescriptionStyle(
+  TextTheme textTheme,
+  ColorScheme colorScheme,
+) {
+  return textTheme.labelSmall?.copyWith(
+    color: colorScheme.onSurfaceVariant,
+    height: 1.35,
+  );
+}
+
 /// App settings.
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -91,8 +112,9 @@ class SettingsPage extends StatelessWidget {
                         title: Text(_localeOptionTitle(sheetL10n, pref)),
                         subtitle: Text(
                           _localeOptionDescription(sheetL10n, pref),
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
+                          style: _sheetOptionDescriptionStyle(
+                            theme.textTheme,
+                            colorScheme,
                           ),
                         ),
                         trailing: selected == pref
@@ -152,8 +174,9 @@ class SettingsPage extends StatelessWidget {
                         title: Text(_themeOptionTitle(sheetL10n, mode)),
                         subtitle: Text(
                           _themeOptionDescription(sheetL10n, mode),
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
+                          style: _sheetOptionDescriptionStyle(
+                            theme.textTheme,
+                            colorScheme,
                           ),
                         ),
                         trailing: selected == mode
@@ -209,8 +232,9 @@ class SettingsPage extends StatelessWidget {
                       title: Text(l10n.themeOption),
                       subtitle: Text(
                         l10n.themeSubtitle,
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
+                        style: _settingsRowDescriptionStyle(
+                          textTheme,
+                          colorScheme,
                         ),
                       ),
                       trailing: Row(
@@ -234,14 +258,7 @@ class SettingsPage extends StatelessWidget {
                     );
                   },
                 ),
-                const SizedBox(height: 24),
-                Text(
-                  l10n.languageSection,
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 8),
                 ListenableBuilder(
                   listenable: localeController,
                   builder: (context, _) {
@@ -251,8 +268,9 @@ class SettingsPage extends StatelessWidget {
                       title: Text(l10n.languageOption),
                       subtitle: Text(
                         l10n.languageSubtitle,
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
+                        style: _settingsRowDescriptionStyle(
+                          textTheme,
+                          colorScheme,
                         ),
                       ),
                       trailing: Row(
