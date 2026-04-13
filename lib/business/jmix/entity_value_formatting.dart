@@ -19,6 +19,9 @@ abstract final class EntityValueFormatting {
   }
 
   /// Full text for tooltips (no 200-char cap).
+  ///
+  /// For entity detail/edit screens, prefer [formatDetailField] so [null] shows
+  /// as the literal word `null`.
   static String formatFull(dynamic value) {
     if (value == null) return '—';
     if (value is String) return value;
@@ -28,5 +31,11 @@ abstract final class EntityValueFormatting {
     } catch (_) {
       return value.toString();
     }
+  }
+
+  /// Full text for entity record view/edit: [null] renders as `null` (visible).
+  static String formatDetailField(dynamic value) {
+    if (value == null) return 'null';
+    return formatFull(value);
   }
 }
