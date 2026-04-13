@@ -15,19 +15,16 @@ bool entityListHasNextPage({
   return result.items.length == pageSize;
 }
 
-/// Label for the bottom pagination bar (English; swap for l10n at call site if needed).
-String entityListPaginationBarLabel({
-  required int pageIndex,
-  required int pageSize,
-  required int itemCount,
+/// Short status line for infinite scroll (English; swap for l10n at call site if needed).
+String entityListInfiniteSummary({
+  required int loadedCount,
   required int? totalCount,
+  required bool hasMore,
 }) {
-  final start = pageIndex * pageSize + (itemCount > 0 ? 1 : 0);
-  final end = pageIndex * pageSize + itemCount;
   if (totalCount != null) {
-    return itemCount > 0
-        ? 'Rows $start–$end of $totalCount'
-        : 'Page ${pageIndex + 1}';
+    if (!hasMore) return 'All $loadedCount of $totalCount rows';
+    return '$loadedCount of $totalCount rows · scroll for more';
   }
-  return itemCount > 0 ? 'Rows $start–$end' : 'No rows';
+  if (!hasMore) return '$loadedCount rows';
+  return '$loadedCount rows · scroll for more';
 }
