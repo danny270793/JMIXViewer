@@ -26,6 +26,7 @@ abstract final class AppLogger {
 
   /// Logs a user-triggered action (debug only), e.g. sidebar select or paging.
   /// Use a stable [name] such as `home.selectEntity`; optional [detail] for context.
+  /// Do not use for taps whose only effect is [Navigator]/GoRouter navigation—those show as [NAV].
   static void logUserAction(String name, [String? detail]) {
     if (!kDebugMode) return;
     if (detail != null && detail.isNotEmpty) {
