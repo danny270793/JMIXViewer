@@ -49,11 +49,33 @@ final class ParsedAttributeMeta {
     return out;
   }
 
+  /// When [entityMetadataAvailable] is true, the catalog from
+  /// `GET metadata/entities/{entityName}` was loaded: only attributes listed
+  /// in `properties` are editable; any other key on the row is read-only.
+  ///
+  /// When metadata failed to load ([entityMetadataAvailable] false), [property]
+  /// is always null and [fallbackFromValue] is used so the form stays usable.
   static ParsedAttributeMeta forField({
     required String fieldName,
     Map<String, dynamic>? property,
     required dynamic currentValue,
+    bool entityMetadataAvailable = false,
   }) {
+    if (fieldName == 'id') {
+      return const ParsedAttributeMeta(
+        name: 'id',
+        kind: AttributeInputKind.readOnlyDisplay,
+      );
+    }
+    if (entityMetadataAvailable) {
+      if (property == null) {
+        return ParsedAttributeMeta(
+          name: fieldName,
+          kind: AttributeInputKind.readOnlyDisplay,
+        );
+      }
+      return fromProperty(property);
+    }
     if (property != null) {
       return fromProperty(property);
     }
@@ -138,9 +160,6 @@ final class ParsedAttributeMeta {
   }
 
   static ParsedAttributeMeta fallbackFromValue(String fieldName, dynamic value) {
-    if (fieldName == 'id') {
-      return const ParsedAttributeMeta(name: 'id', kind: AttributeInputKind.readOnlyDisplay);
-    }
     if (value is bool) {
       return ParsedAttributeMeta(name: fieldName, kind: AttributeInputKind.boolean);
     }
