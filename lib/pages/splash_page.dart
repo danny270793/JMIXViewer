@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
-import 'login_page.dart';
+import '../router/app_router.dart';
 
-/// First screen: shows branding and a loader, then navigates to [LoginPage].
+/// First screen: shows branding and a loader, then navigates to login.
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
 
@@ -23,9 +24,7 @@ class _SplashPageState extends State<SplashPage> {
   Future<void> _navigateToLogin() async {
     await Future<void>.delayed(SplashPage.displayDuration);
     if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (context) => const LoginPage()),
-    );
+    context.go(AppRoutes.login);
   }
 
   @override

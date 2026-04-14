@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../api/jmix/jmix_api_exception.dart';
 import '../auth/foodie_session.dart';
-import 'home_page.dart';
+import '../router/app_router.dart';
 
-/// Obtains an access token via OAuth2 client credentials, then opens [HomePage].
+/// Obtains an access token via OAuth2 client credentials, then navigates home.
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -21,9 +22,7 @@ class _LoginPageState extends State<LoginPage> {
     try {
       await FoodieSession.instance.signInWithClientCredentials();
       if (!mounted) return;
-      await Navigator.of(context).pushReplacement(
-        MaterialPageRoute<void>(builder: (_) => const HomePage()),
-      );
+      context.go(AppRoutes.home);
     } on JmixApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

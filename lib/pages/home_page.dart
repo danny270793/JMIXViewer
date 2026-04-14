@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../auth/foodie_session.dart';
-import 'login_page.dart';
+import '../router/app_router.dart';
 
 /// Shown after a successful Foodie / Jmix sign-in.
 class HomePage extends StatelessWidget {
@@ -17,10 +18,7 @@ class HomePage extends StatelessWidget {
           TextButton(
             onPressed: () {
               session.signOut();
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute<void>(builder: (_) => const LoginPage()),
-                (_) => false,
-              );
+              context.go(AppRoutes.login);
             },
             child: const Text('Sign out'),
           ),
