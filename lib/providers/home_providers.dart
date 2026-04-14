@@ -96,33 +96,57 @@ final entityListProvider =
   EntityListNotifier.new,
 );
 
+Future<AccumulatedEntityList?> _loadEntityListFirstPage(
+  Ref ref,
+  String entityName,
+) async {
+  final result = await ref.read(loadEntityListPageUseCaseProvider)(
+    entityName: entityName,
+    pageIndex: 0,
+  );
+  if (result == null) return null;
+
+  final items = List<Map<String, dynamic>>.from(result.items);
+  final hasMore = result.items.isNotEmpty &&
+      entityListHasNextPage(
+        pageIndex: 0,
+        pageSize: kDefaultEntityPageSize,
+        result: result,
+      );
+
+  return AccumulatedEntityList(
+    items: items,
+    totalCount: result.totalCount,
+    nextPageIndex: 1,
+    hasMore: hasMore,
+    isLoadingMore: false,
+  );
+}
+
 class EntityListNotifier extends AsyncNotifier<AccumulatedEntityList?> {
   @override
   Future<AccumulatedEntityList?> build() async {
     final sel = ref.watch(homeSelectionProvider);
     if (sel.selectedEntityName == null) return null;
+    return _loadEntityListFirstPage(ref, sel.selectedEntityName!);
+  }
 
-    final result = await ref.read(loadEntityListPageUseCaseProvider)(
-      entityName: sel.selectedEntityName,
-      pageIndex: 0,
-    );
-    if (result == null) return null;
-
-    final items = List<Map<String, dynamic>>.from(result.items);
-    final hasMore = result.items.isNotEmpty &&
-        entityListHasNextPage(
-          pageIndex: 0,
-          pageSize: kDefaultEntityPageSize,
-          result: result,
-        );
-
-    return AccumulatedEntityList(
-      items: items,
-      totalCount: result.totalCount,
-      nextPageIndex: 1,
-      hasMore: hasMore,
-      isLoadingMore: false,
-    );
+  /// Reloads page 0 (pull-to-refresh). Does not set [state] to loading so the
+  /// list is not replaced by a full-screen spinner while refreshing.
+  Future<void> refresh() async {
+    final sel = ref.read(homeSelectionProvider);
+    final name = sel.selectedEntityName;
+    if (name == null) return;
+    AppLogger.logUserAction('home.entityList.refresh', name);
+    try {
+      final next = await _loadEntityListFirstPage(ref, name);
+      state = AsyncValue.data(next);
+    } catch (e, st) {
+      final previous = state.valueOrNull;
+      state = previous != null
+          ? AsyncValue.data(previous)
+          : AsyncValue.error(e, st);
+    }
   }
 
   /// Loads the next page when the user scrolls near the bottom.

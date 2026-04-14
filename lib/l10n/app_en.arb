@@ -38,5 +38,26 @@
   "languageSpanish": "Spanish",
   "languageSystemDesc": "Use your device language when the app supports it",
   "languageEnglishDesc": "Always show the interface in English",
-  "languageSpanishDesc": "Always show the interface in Spanish"
+  "languageSpanishDesc": "Always show the interface in Spanish",
+  "entityRecordEdit": "Edit",
+  "entityRecordSave": "Save",
+  "entityRecordCancel": "Cancel",
+  "entityRecordMissingId": "Cannot save: this record has no id.",
+  "entityRecordFieldInvalid": "Invalid value for “{field}”.",
+  "@entityRecordFieldInvalid": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "entityRecordSaveSuccess": "Record updated.",
+  "entityRecordSaveFailed": "Save failed: {error}",
+  "@entityRecordSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  }
 }

@@ -110,4 +110,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get languageSpanishDesc => 'Always show the interface in Spanish';
+
+  @override
+  String get entityRecordEdit => 'Edit';
+
+  @override
+  String get entityRecordSave => 'Save';
+
+  @override
+  String get entityRecordCancel => 'Cancel';
+
+  @override
+  String get entityRecordMissingId => 'Cannot save: this record has no id.';
+
+  @override
+  String entityRecordFieldInvalid(String field) {
+    return 'Invalid value for “$field”.';
+  }
+
+  @override
+  String get entityRecordSaveSuccess => 'Record updated.';
+
+  @override
+  String entityRecordSaveFailed(String error) {
+    return 'Save failed: $error';
+  }
 }

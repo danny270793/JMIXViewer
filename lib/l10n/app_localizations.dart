@@ -289,6 +289,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Always show the interface in Spanish'**
   String get languageSpanishDesc;
+
+  /// No description provided for @entityRecordEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get entityRecordEdit;
+
+  /// No description provided for @entityRecordSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get entityRecordSave;
+
+  /// No description provided for @entityRecordCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get entityRecordCancel;
+
+  /// No description provided for @entityRecordMissingId.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot save: this record has no id.'**
+  String get entityRecordMissingId;
+
+  /// No description provided for @entityRecordFieldInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid value for “{field}”.'**
+  String entityRecordFieldInvalid(String field);
+
+  /// No description provided for @entityRecordSaveSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Record updated.'**
+  String get entityRecordSaveSuccess;
+
+  /// No description provided for @entityRecordSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Save failed: {error}'**
+  String entityRecordSaveFailed(String error);
 }
 
 class _AppLocalizationsDelegate

@@ -4,11 +4,12 @@ import 'package:go_router/go_router.dart';
 
 import '../business/jmix/entity_list_pagination.dart';
 import '../business/jmix/entity_messages_labels.dart';
+import '../business/jmix/entity_record_collapse_titles.dart';
 import '../l10n/app_localizations.dart';
 import '../logging/app_logger.dart';
 import '../providers/home_providers.dart';
 import '../router/app_router.dart';
-import '../widgets/entity_record_expansion_tile.dart';
+import 'entity_record_detail_page.dart';
 
 /// Shown after a successful Foodie / Jmix sign-in.
 class HomePage extends ConsumerWidget {
@@ -209,27 +210,44 @@ class HomePage extends ConsumerWidget {
 
     return listAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '$e',
-                textAlign: TextAlign.center,
+      error: (e, _) => LayoutBuilder(
+        builder: (context, constraints) {
+          Future<void> onRefresh() async {
+            await ref.read(entityListProvider.notifier).refresh();
+          }
+
+          return RefreshIndicator(
+            onRefresh: onRefresh,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '$e',
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                        TextButton(
+                          onPressed: () {
+                            AppLogger.logUserAction('home.retryEntityList');
+                            onRefresh();
+                          },
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-              const SizedBox(height: 12),
-              TextButton(
-                onPressed: () {
-                  AppLogger.logUserAction('home.retryEntityList');
-                  ref.invalidate(entityListProvider);
-                },
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
       data: (accum) {
         if (accum == null) {
@@ -239,11 +257,25 @@ class HomePage extends ConsumerWidget {
         final entityName = selection.selectedEntityName!;
 
         if (items.isEmpty) {
-          return Center(
-            child: Text(
-              'No rows',
-              style: theme.textTheme.bodyLarge,
-            ),
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              return RefreshIndicator(
+                onRefresh: () =>
+                    ref.read(entityListProvider.notifier).refresh(),
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    child: Center(
+                      child: Text(
+                        'No rows',
+                        style: theme.textTheme.bodyLarge,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
           );
         }
 
@@ -343,22 +375,22 @@ class _InfiniteEntityListViewState extends ConsumerState<_InfiniteEntityListView
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-          child: Text(
-            summary,
-            style: widget.theme.textTheme.bodySmall?.copyWith(
-              color: widget.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
         Expanded(
-          child: ListView.separated(
-            controller: _scrollController,
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            itemCount: items.length + extra,
-            separatorBuilder: (context, _) => const Divider(height: 1),
-            itemBuilder: (context, index) {
+          child: RefreshIndicator(
+            onRefresh: () async {
+              await ref.read(entityListProvider.notifier).refresh();
+              if (mounted) {
+                WidgetsBinding.instance
+                    .addPostFrameCallback((_) => _fillViewportIfNeeded());
+              }
+            },
+            child: ListView.separated(
+              controller: _scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              itemCount: items.length + extra,
+              separatorBuilder: (context, _) => const Divider(height: 1),
+              itemBuilder: (context, index) {
               if (index >= items.length) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
@@ -371,16 +403,49 @@ class _InfiniteEntityListViewState extends ConsumerState<_InfiniteEntityListView
                   ),
                 );
               }
-              return EntityRecordExpansionTile(
-                row: items[index],
-                orderedColumnKeys: keys,
-                theme: widget.theme,
-                colorScheme: widget.colorScheme,
-                entityName: widget.entityName,
-                allEntityMessages: widget.drawerMessages,
-                fieldMessagesForEntity: null,
+              final row = items[index];
+              return ListTile(
+                title: Tooltip(
+                  message: EntityRecordCollapseTitles.titleTooltip(row, keys),
+                  child: Text(
+                    EntityRecordCollapseTitles.titleText(row, keys),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                trailing: Icon(
+                  Icons.chevron_right,
+                  color: widget.colorScheme.onSurfaceVariant,
+                ),
+                onTap: () async {
+                  final recordWasSaved = await context.push<bool>(
+                    AppRoutes.entityRecord,
+                    extra: EntityRecordDetailArgs(
+                      entityName: widget.entityName,
+                      row: Map<String, dynamic>.from(row),
+                    ),
+                  );
+                  if (!context.mounted) return;
+                  if (recordWasSaved == true) {
+                    await ref.read(entityListProvider.notifier).refresh();
+                  }
+                },
               );
             },
+            ),
+          ),
+        ),
+        Material(
+          elevation: 1,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Text(
+              summary,
+              textAlign: TextAlign.center,
+              style: widget.theme.textTheme.bodySmall?.copyWith(
+                color: widget.colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
         ),
       ],
