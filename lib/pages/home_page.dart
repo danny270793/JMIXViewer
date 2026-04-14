@@ -1,164 +1,60 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../api/jmix/models/jmix_entity_list_result.dart';
-import '../auth/foodie_session.dart';
+import '../business/jmix/entity_list_pagination.dart';
+import '../business/jmix/entity_messages_labels.dart';
 import '../l10n/app_localizations.dart';
+import '../logging/app_logger.dart';
+import '../providers/home_providers.dart';
 import '../router/app_router.dart';
-
-/// Metadata list plus `messages/entities` map (entity or property name → localized text).
-final class _DrawerEntityData {
-  const _DrawerEntityData({
-    required this.metadata,
-    required this.messages,
-  });
-
-  final List<Map<String, dynamic>> metadata;
-  final Map<String, dynamic> messages;
-}
+import '../widgets/entity_record_expansion_tile.dart';
+import '../widgets/pagination_bar.dart';
 
 /// Shown after a successful Foodie / Jmix sign-in.
-class HomePage extends StatefulWidget {
+class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  static const int _pageSize = 20;
-
-  late final Future<_DrawerEntityData> _entitiesFuture;
-
-  /// From `GET messages/entities` (same bundle as sidebar).
-  Map<String, dynamic> _allEntityMessages = {};
-
-  /// From `GET messages/entities/{entityName}` for attribute labels on the list.
-  Map<String, dynamic>? _fieldMessagesForEntity;
-
-  String? _selectedEntityName;
-  int _pageIndex = 0;
-  Future<JmixEntityListResult>? _listFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _entitiesFuture = _loadDrawerEntityData().then((data) {
-      if (mounted) {
-        setState(() {
-          _allEntityMessages = Map<String, dynamic>.from(data.messages);
-        });
-      }
-      return data;
-    });
-  }
-
-  /// Loads entity metadata and localized labels (`GET messages/entities`) in parallel.
-  Future<_DrawerEntityData> _loadDrawerEntityData() async {
-    final results = await Future.wait<Object>([
-      FoodieSession.instance.rest.metadataListEntities(),
-      FoodieSession.instance.rest.messagesEntities().catchError(
-            (_) => <String, dynamic>{},
-          ),
-    ]);
-    return _DrawerEntityData(
-      metadata: results[0] as List<Map<String, dynamic>>,
-      messages: Map<String, dynamic>.from(results[1] as Map),
-    );
-  }
-
-  void _closeDrawer(BuildContext context) {
-    Scaffold.maybeOf(context)?.closeDrawer();
-  }
-
-  void _selectEntity(String entityName) {
-    setState(() {
-      _selectedEntityName = entityName;
-      _pageIndex = 0;
-      _listFuture = _loadCurrentPage();
-      _fieldMessagesForEntity = null;
-    });
-    _loadFieldMessagesFor(entityName);
-  }
-
-  Future<void> _loadFieldMessagesFor(String entityName) async {
-    try {
-      final m = await FoodieSession.instance.rest.messagesEntity(entityName);
-      if (!mounted || _selectedEntityName != entityName) return;
-      setState(() => _fieldMessagesForEntity = m);
-    } catch (_) {
-      if (!mounted || _selectedEntityName != entityName) return;
-      setState(() => _fieldMessagesForEntity = const {});
-    }
-  }
-
-  void _clearSelection() {
-    setState(() {
-      _selectedEntityName = null;
-      _pageIndex = 0;
-      _listFuture = null;
-      _fieldMessagesForEntity = null;
-    });
-  }
-
-  void _setPage(int page) {
-    setState(() {
-      _pageIndex = page;
-      _listFuture = _loadCurrentPage();
-    });
-  }
-
-  Future<JmixEntityListResult> _loadCurrentPage() {
-    return FoodieSession.instance.rest.loadEntities(
-      _selectedEntityName!,
-      limit: '$_pageSize',
-      offset: '${_pageIndex * _pageSize}',
-      returnCount: true,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final l10n = AppLocalizations.of(context);
+    final selection = ref.watch(homeSelectionProvider);
 
     return Scaffold(
       drawer: Drawer(
-        child: SafeArea(
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              DrawerHeader(
-                decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Icon(
-                      Icons.view_in_ar_rounded,
-                      size: 40,
-                      color: colorScheme.primary,
+        child: Builder(
+          builder: (drawerContext) {
+            return SafeArea(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  DrawerHeader(
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.homeTitle,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: colorScheme.onPrimaryContainer,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Icon(
+                          Icons.view_in_ar_rounded,
+                          size: 40,
+                          color: colorScheme.primary,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          l10n.homeTitle,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            color: colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-              FutureBuilder<_DrawerEntityData>(
-                future: _entitiesFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Padding(
+                  ),
+                  ref.watch(drawerEntitiesProvider).when(
+                    loading: () => const Padding(
                       padding: EdgeInsets.symmetric(vertical: 16),
                       child: Center(
                         child: SizedBox(
@@ -167,83 +63,87 @@ class _HomePageState extends State<HomePage> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ),
                       ),
-                    );
-                  }
-                  if (snapshot.hasError) {
-                    return ListTile(
+                    ),
+                    error: (e, _) => ListTile(
                       dense: true,
                       title: Text(
                         'Could not load entities',
                         style: TextStyle(color: colorScheme.error),
                       ),
                       subtitle: Text(
-                        '${snapshot.error}',
+                        '$e',
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    );
-                  }
-                  final data = snapshot.data!;
-                  final list = data.metadata;
-                  final messages = data.messages;
-                  if (list.isEmpty) {
-                    return ListTile(
-                      dense: true,
-                      title: Text(
-                        'No entities',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    );
-                  }
-                  final sorted = [...list]..sort(
-                        (a, b) => _sidebarSortKey(
-                              _entityDisplayName(a),
-                              messages,
-                            ).compareTo(
-                              _sidebarSortKey(
-                                _entityDisplayName(b),
-                                messages,
-                              ),
-                            ),
-                      );
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      for (final meta in sorted)
-                        ListTile(
+                    ),
+                    data: (data) {
+                      final list = data.metadata;
+                      final messages = data.messages;
+                      if (list.isEmpty) {
+                        return ListTile(
                           dense: true,
                           title: Text(
-                            _sidebarLabel(
-                              _entityDisplayName(meta),
-                              messages,
+                            'No entities',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                          onTap: () {
-                            _selectEntity(_entityDisplayName(meta));
-                            _closeDrawer(context);
-                          },
-                        ),
-                    ],
-                  );
-                },
+                        );
+                      }
+                      final sorted = [...list]..sort(
+                            (a, b) => sidebarSortKey(
+                                  entityDisplayName(a),
+                                  messages,
+                                ).compareTo(
+                                  sidebarSortKey(
+                                    entityDisplayName(b),
+                                    messages,
+                                  ),
+                                ),
+                          );
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (final meta in sorted)
+                            ListTile(
+                              dense: true,
+                              title: Text(
+                                sidebarLabel(
+                                  entityDisplayName(meta),
+                                  messages,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              onTap: () {
+                                ref
+                                    .read(homeSelectionProvider.notifier)
+                                    .selectEntity(entityDisplayName(meta));
+                                Scaffold.maybeOf(drawerContext)
+                                    ?.closeDrawer();
+                              },
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
       appBar: AppBar(
-        leading: _selectedEntityName != null
+        leading: selection.selectedEntityName != null
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
-                onPressed: _clearSelection,
+                onPressed: () {
+                  ref.read(homeSelectionProvider.notifier).clear();
+                },
               )
             : null,
         title: Text(
-          _selectedEntityName ?? l10n.homeTitle,
+          selection.selectedEntityName ?? l10n.homeTitle,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -255,9 +155,15 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: _selectedEntityName == null
+      body: selection.selectedEntityName == null
           ? _buildWelcomeBody(context, colorScheme, l10n)
-          : _buildEntityList(theme, colorScheme),
+          : _buildEntityList(
+              context,
+              ref,
+              theme,
+              colorScheme,
+              selection,
+            ),
     );
   }
 
@@ -297,40 +203,55 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildEntityList(ThemeData theme, ColorScheme colorScheme) {
-    return FutureBuilder<JmixEntityListResult>(
-      future: _listFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '${snapshot.error}',
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _listFuture = _loadCurrentPage();
-                      });
-                    },
-                    child: const Text('Retry'),
-                  ),
-                ],
+  Widget _buildEntityList(
+    BuildContext context,
+    WidgetRef ref,
+    ThemeData theme,
+    ColorScheme colorScheme,
+    HomeSelection selection,
+  ) {
+    final listAsync = ref.watch(entityListProvider);
+    final drawerMessages = ref.watch(drawerEntitiesProvider).maybeWhen(
+          data: (d) => d.messages,
+          orElse: () => <String, dynamic>{},
+        );
+    final fieldMessages = ref.watch(fieldMessagesForSelectionProvider).maybeWhen(
+          data: (m) => m,
+          orElse: () => null,
+        );
+
+    return listAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '$e',
+                textAlign: TextAlign.center,
               ),
-            ),
-          );
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () {
+                  AppLogger.logUserAction('home.retryEntityList');
+                  ref.invalidate(entityListProvider);
+                },
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      ),
+      data: (result) {
+        if (result == null) {
+          return const SizedBox.shrink();
         }
-        final result = snapshot.data!;
         final items = result.items;
+        final entityName = selection.selectedEntityName!;
+        final pageIndex = selection.pageIndex;
+
         if (items.isEmpty) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -343,23 +264,38 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
-              _PaginationBar(
-                pageIndex: _pageIndex,
-                pageSize: _pageSize,
-                itemCount: 0,
-                totalCount: result.totalCount,
-                onPrevious:
-                    _pageIndex > 0 ? () => _setPage(_pageIndex - 1) : null,
-                onNext: _hasNextPage(result)
-                    ? () => _setPage(_pageIndex + 1)
+              PaginationBar(
+                label: entityListPaginationBarLabel(
+                  pageIndex: pageIndex,
+                  pageSize: kDefaultEntityPageSize,
+                  itemCount: 0,
+                  totalCount: result.totalCount,
+                ),
+                onPrevious: pageIndex > 0
+                    ? () => ref.read(homeSelectionProvider.notifier).setPage(
+                          pageIndex - 1,
+                        )
+                    : null,
+                onNext: entityListHasNextPage(
+                  pageIndex: pageIndex,
+                  pageSize: kDefaultEntityPageSize,
+                  result: result,
+                )
+                    ? () => ref.read(homeSelectionProvider.notifier).setPage(
+                          pageIndex + 1,
+                        )
                     : null,
               ),
             ],
           );
         }
 
-        final entityName = _selectedEntityName!;
-        final keys = _columnKeysSortedByDisplayText(items, entityName);
+        final keys = entityRowColumnKeysSortedByDisplay(
+          items,
+          entityName,
+          drawerMessages,
+          fieldMessages,
+        );
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -369,311 +305,43 @@ class _HomePageState extends State<HomePage> {
                 itemCount: items.length,
                 separatorBuilder: (_, _) => const Divider(height: 1),
                 itemBuilder: (context, index) {
-                  return _EntityRecordTile(
+                  return EntityRecordExpansionTile(
                     row: items[index],
-                    keys: keys,
+                    orderedColumnKeys: keys,
                     theme: theme,
                     colorScheme: colorScheme,
-                    displayValue: _cellText,
-                    fullValue: _fullValueText,
-                    attributeLabel: (k) =>
-                        _attributeSidebarLabel(k, entityName),
+                    entityName: entityName,
+                    allEntityMessages: drawerMessages,
+                    fieldMessagesForEntity: fieldMessages,
                   );
                 },
               ),
             ),
-            _PaginationBar(
-              pageIndex: _pageIndex,
-              pageSize: _pageSize,
-              itemCount: items.length,
-              totalCount: result.totalCount,
-              onPrevious:
-                  _pageIndex > 0 ? () => _setPage(_pageIndex - 1) : null,
-              onNext: _hasNextPage(result)
-                  ? () => _setPage(_pageIndex + 1)
+            PaginationBar(
+              label: entityListPaginationBarLabel(
+                pageIndex: pageIndex,
+                pageSize: kDefaultEntityPageSize,
+                itemCount: items.length,
+                totalCount: result.totalCount,
+              ),
+              onPrevious: pageIndex > 0
+                  ? () => ref.read(homeSelectionProvider.notifier).setPage(
+                        pageIndex - 1,
+                      )
+                  : null,
+              onNext: entityListHasNextPage(
+                pageIndex: pageIndex,
+                pageSize: kDefaultEntityPageSize,
+                result: result,
+              )
+                  ? () => ref.read(homeSelectionProvider.notifier).setPage(
+                        pageIndex + 1,
+                      )
                   : null,
             ),
           ],
         );
       },
-    );
-  }
-
-  bool _hasNextPage(JmixEntityListResult result) {
-    final total = result.totalCount;
-    final end = _pageIndex * _pageSize + result.items.length;
-    if (total != null) {
-      return end < total;
-    }
-    return result.items.length == _pageSize;
-  }
-
-  /// Union of JSON keys for the current page, sorted by raw key (technical).
-  List<String> _columnKeys(List<Map<String, dynamic>> items) {
-    final keys = <String>{};
-    for (final row in items) {
-      keys.addAll(row.keys);
-    }
-    return keys.toList()..sort();
-  }
-
-  /// Same keys as [_columnKeys], ordered by localized display text (same rules as sidebar sort).
-  List<String> _columnKeysSortedByDisplayText(
-    List<Map<String, dynamic>> items,
-    String entityName,
-  ) {
-    final keys = _columnKeys(items);
-    return [...keys]..sort(
-          (a, b) => _attributeSortKey(a, entityName)
-              .compareTo(_attributeSortKey(b, entityName)),
-        );
-  }
-
-  /// Localized caption for an attribute: per-entity messages, then `entity.attr`, then global key.
-  String? _attributeCaption(String attributeKey, String entityName) {
-    final per = _fieldMessagesForEntity;
-    if (per != null && per.isNotEmpty) {
-      final c = _messageCaption(attributeKey, per);
-      if (c != null) return c;
-    }
-    final dotted = '$entityName.$attributeKey';
-    String? c = _messageCaption(dotted, _allEntityMessages);
-    c ??= _messageCaption(attributeKey, _allEntityMessages);
-    return c;
-  }
-
-  /// Same pattern as [_sidebarLabel]: show `"Caption (attributeKey)"` when caption differs.
-  String _attributeSidebarLabel(String attributeKey, String entityName) {
-    final caption = _attributeCaption(attributeKey, entityName);
-    if (caption == null) return attributeKey;
-    if (caption == attributeKey) return caption;
-    return '$caption ($attributeKey)';
-  }
-
-  String _attributeSortKey(String attributeKey, String entityName) {
-    return _attributeCaption(attributeKey, entityName) ?? attributeKey;
-  }
-
-  /// Shortened for list rows (long JSON still truncated).
-  String _cellText(dynamic value) {
-    if (value == null) return '—';
-    if (value is String) return value;
-    if (value is num || value is bool) return value.toString();
-    try {
-      final s = jsonEncode(value);
-      if (s.length > 200) return '${s.substring(0, 197)}…';
-      return s;
-    } catch (_) {
-      return value.toString();
-    }
-  }
-
-  /// Full text for tooltips (no 200-char cap).
-  String _fullValueText(dynamic value) {
-    if (value == null) return '—';
-    if (value is String) return value;
-    if (value is num || value is bool) return value.toString();
-    try {
-      return jsonEncode(value);
-    } catch (_) {
-      return value.toString();
-    }
-  }
-
-  /// Jmix `metadata/entities` items use `entityName` (see OpenAPI `entityMetadata`).
-  String _entityDisplayName(Map<String, dynamic> meta) {
-    final name = meta['entityName'];
-    if (name is String && name.isNotEmpty) return name;
-    return '?';
-  }
-
-  /// Localized caption from [messages] for [entityName], if present (see `GET messages/entities`).
-  String? _messageCaption(String entityName, Map<String, dynamic> messages) {
-    final v = messages[entityName];
-    if (v is String && v.trim().isNotEmpty) return v;
-    return null;
-  }
-
-  /// Sidebar line: localized caption, or [entityName] if missing; if caption differs, `"Caption (entityName)"`.
-  String _sidebarLabel(String entityName, Map<String, dynamic> messages) {
-    final caption = _messageCaption(entityName, messages);
-    if (caption == null) return entityName;
-    if (caption == entityName) return caption;
-    return '$caption ($entityName)';
-  }
-
-  /// Sort order: localized caption when present, otherwise [entityName] (not the `"Caption (entityName)"` line).
-  String _sidebarSortKey(String entityName, Map<String, dynamic> messages) {
-    return _messageCaption(entityName, messages) ?? entityName;
-  }
-}
-
-/// Jmix entity JSON often includes `_instanceName` for display in lists.
-const String _kInstanceNameField = '_instanceName';
-
-class _EntityRecordTile extends StatelessWidget {
-  const _EntityRecordTile({
-    required this.row,
-    required this.keys,
-    required this.theme,
-    required this.colorScheme,
-    required this.displayValue,
-    required this.fullValue,
-    required this.attributeLabel,
-  });
-
-  final Map<String, dynamic> row;
-  final List<String> keys;
-  final ThemeData theme;
-  final ColorScheme colorScheme;
-  final String Function(dynamic value) displayValue;
-  final String Function(dynamic value) fullValue;
-  final String Function(String attributeKey) attributeLabel;
-
-  String _collapsedTitleText() {
-    final v = row[_kInstanceNameField];
-    if (v != null) {
-      final s = displayValue(v);
-      if (s != '—' && s.trim().isNotEmpty) return s;
-    }
-    if (row['id'] != null) return displayValue(row['id']);
-    if (keys.isNotEmpty) return displayValue(row[keys.first]);
-    return '—';
-  }
-
-  String _collapsedTitleTooltip() {
-    final v = row[_kInstanceNameField];
-    if (v != null) return fullValue(v);
-    if (row['id'] != null) return fullValue(row['id']);
-    if (keys.isNotEmpty) return fullValue(row[keys.first]);
-    return '—';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final restKeys =
-        keys.where((k) => k != _kInstanceNameField).toList(growable: false);
-
-    return Theme(
-      data: theme.copyWith(dividerColor: Colors.transparent),
-      child: ExpansionTile(
-        maintainState: true,
-        tilePadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
-        expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
-        title: Tooltip(
-          message: _collapsedTitleTooltip(),
-          child: Text(
-            _collapsedTitleText(),
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: colorScheme.onSurface,
-              fontWeight: FontWeight.w500,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        children: [
-          if (restKeys.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Text(
-                'No other fields',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            )
-          else
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  for (var i = 0; i < restKeys.length; i++) ...[
-                    if (i > 0) const SizedBox(height: 14),
-                    Text(
-                      attributeLabel(restKeys[i]),
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: colorScheme.primary,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Tooltip(
-                      message: fullValue(row[restKeys[i]]),
-                      child: Text(
-                        displayValue(row[restKeys[i]]),
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: colorScheme.onSurface,
-                          height: 1.35,
-                        ),
-                        maxLines: 5,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PaginationBar extends StatelessWidget {
-  const _PaginationBar({
-    required this.pageIndex,
-    required this.pageSize,
-    required this.itemCount,
-    required this.totalCount,
-    required this.onPrevious,
-    required this.onNext,
-  });
-
-  final int pageIndex;
-  final int pageSize;
-  final int itemCount;
-  final int? totalCount;
-  final VoidCallback? onPrevious;
-  final VoidCallback? onNext;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final start = pageIndex * pageSize + (itemCount > 0 ? 1 : 0);
-    final end = pageIndex * pageSize + itemCount;
-    final label = totalCount != null
-        ? (itemCount > 0 ? 'Rows $start–$end of $totalCount' : 'Page ${pageIndex + 1}')
-        : (itemCount > 0 ? 'Rows $start–$end' : 'No rows');
-
-    return Material(
-      elevation: 1,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Row(
-          children: [
-            IconButton(
-              tooltip: 'Previous page',
-              icon: const Icon(Icons.chevron_left),
-              onPressed: onPrevious,
-            ),
-            Expanded(
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium,
-              ),
-            ),
-            IconButton(
-              tooltip: 'Next page',
-              icon: const Icon(Icons.chevron_right),
-              onPressed: onNext,
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
