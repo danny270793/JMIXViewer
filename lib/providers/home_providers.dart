@@ -12,10 +12,19 @@ import '../business/jmix/entity_messages_labels.dart';
 import '../domain/jmix/drawer_entities_result.dart';
 import '../logging/app_logger.dart';
 
+/// Bumped after [FoodieSession.configure] so widgets pick up a new REST client.
+final jmixSessionEpochProvider = StateProvider<int>((ref) => 0);
+
 /// Jmix REST client used for home (same instance as [FoodieSession]).
 final jmixRestConnectorProvider = Provider<JmixRestConnector>((ref) {
+  ref.watch(jmixSessionEpochProvider);
   return FoodieSession.instance.rest;
 });
+
+/// Clears in-memory caches that are keyed only by entity name (call after reconfiguring the server).
+void resetJmixHomeCaches() {
+  _entityHasCreatedDateForSortCache.clear();
+}
 
 final loadDrawerEntitiesUseCaseProvider =
     Provider<LoadDrawerEntitiesUseCase>((ref) {
@@ -29,6 +38,7 @@ final loadEntityListPageUseCaseProvider =
 
 /// Drawer: metadata + global entity messages.
 final drawerEntitiesProvider = FutureProvider<DrawerEntitiesResult>((ref) {
+  ref.watch(jmixSessionEpochProvider);
   return ref.read(loadDrawerEntitiesUseCaseProvider)();
 });
 
@@ -256,6 +266,7 @@ Future<AccumulatedEntityList?> _loadEntityListFirstPage(
 class EntityListNotifier extends AsyncNotifier<AccumulatedEntityList?> {
   @override
   Future<AccumulatedEntityList?> build() async {
+    ref.watch(jmixSessionEpochProvider);
     final sel = ref.watch(homeSelectionProvider);
     if (sel.selectedEntityName == null) return null;
     return _loadEntityListFirstPage(ref, sel.selectedEntityName!);

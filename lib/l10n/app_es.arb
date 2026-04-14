@@ -4,8 +4,14 @@
   "splashLoading": "Cargando…",
   "loginTitle": "Iniciar sesión",
   "welcomeBack": "Bienvenido de nuevo",
-  "loginBody": "Conéctate a Foodie con credenciales de cliente OAuth2. La app solicita un token de acceso y lo envía como Authorization: Bearer en las llamadas a la API.",
-  "connectToFoodie": "Conectar a Foodie",
+  "loginBody": "Introduce la URL de la aplicación Jmix y las credenciales de cliente OAuth2. La app solicita un token de acceso y lo envía como Authorization: Bearer en las llamadas a la API.",
+  "loginApplicationUrl": "URL de la aplicación",
+  "loginClientId": "ID de cliente",
+  "loginClientSecret": "Secreto de cliente",
+  "loginUrlHint": "https://ejemplo.com",
+  "loginInvalidUrl": "Introduce una URL válida con un host (p. ej. https://ejemplo.com).",
+  "loginFieldRequired": "Este campo es obligatorio.",
+  "connectToFoodie": "Conectar",
   "connectionFailed": "Error de conexión: {error}",
   "@connectionFailed": {
     "placeholders": {

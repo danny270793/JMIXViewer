@@ -22,10 +22,29 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get loginBody =>
-      'Conéctate a Foodie con credenciales de cliente OAuth2. La app solicita un token de acceso y lo envía como Authorization: Bearer en las llamadas a la API.';
+      'Introduce la URL de la aplicación Jmix y las credenciales de cliente OAuth2. La app solicita un token de acceso y lo envía como Authorization: Bearer en las llamadas a la API.';
 
   @override
-  String get connectToFoodie => 'Conectar a Foodie';
+  String get loginApplicationUrl => 'URL de la aplicación';
+
+  @override
+  String get loginClientId => 'ID de cliente';
+
+  @override
+  String get loginClientSecret => 'Secreto de cliente';
+
+  @override
+  String get loginUrlHint => 'https://ejemplo.com';
+
+  @override
+  String get loginInvalidUrl =>
+      'Introduce una URL válida con un host (p. ej. https://ejemplo.com).';
+
+  @override
+  String get loginFieldRequired => 'Este campo es obligatorio.';
+
+  @override
+  String get connectToFoodie => 'Conectar';
 
   @override
   String connectionFailed(String error) {

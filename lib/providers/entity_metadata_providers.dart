@@ -6,6 +6,7 @@ import 'home_providers.dart';
 final entityMetadataProvider =
     FutureProvider.family<Map<String, dynamic>, String>(
   (ref, entityName) {
+    ref.watch(jmixRestConnectorProvider);
     return ref.read(jmixRestConnectorProvider).metadataGetEntity(entityName);
   },
 );
@@ -14,6 +15,7 @@ final entityMetadataProvider =
 final enumMetadataProvider =
     FutureProvider.family<Map<String, dynamic>, String>(
   (ref, enumClassName) {
+    ref.watch(jmixRestConnectorProvider);
     return ref.read(jmixRestConnectorProvider).metadataGetEnum(enumClassName);
   },
 );
