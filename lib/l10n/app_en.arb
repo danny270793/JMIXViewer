@@ -60,6 +60,18 @@
       }
     }
   },
+  "entityRecordDeleteTooltip": "Delete record",
+  "entityRecordDeleteConfirmTitle": "Delete this record?",
+  "entityRecordDeleteConfirmMessage": "This cannot be undone. The record will be removed from the server.",
+  "entityRecordDeleteConfirmButton": "Delete",
+  "entityRecordDeleteFailed": "Delete failed: {error}",
+  "@entityRecordDeleteFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "homeEntityListSortTooltip": "Sort list",
   "homeEntityListSortTitle": "Sort list",
   "homeEntityListSortField": "Sort by",
@@ -69,5 +81,12 @@
   "homeEntityListSortDefaultOrder": "Default order",
   "homeEntityListSortApply": "Apply",
   "homeEntityListSortLoadingFields": "Loading fields…",
-  "homeEntityListSortNoFields": "No fields available for sorting."
+  "homeEntityListSortNoFields": "No fields available for sorting.",
+  "homeEntityListSearchTooltip": "Search list",
+  "homeEntityListSearchTitle": "Search",
+  "homeEntityListSearchField": "Search in field",
+  "homeEntityListSearchQueryHint": "Text to find",
+  "homeEntityListSearchClear": "Clear search",
+  "homeEntityListSearchApply": "Apply",
+  "homeEntityListSearchLoadingFields": "Loading fields…"
 }

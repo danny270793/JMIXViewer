@@ -6,6 +6,8 @@ import '../application/use_cases/jmix/load_drawer_entities_use_case.dart';
 import '../application/use_cases/jmix/load_entity_list_page_use_case.dart';
 import '../auth/foodie_session.dart';
 import '../business/jmix/entity_list_pagination.dart';
+import '../business/jmix/entity_list_search.dart';
+import '../business/jmix/entity_list_search_operators.dart';
 import '../business/jmix/entity_messages_labels.dart';
 import '../domain/jmix/drawer_entities_result.dart';
 import '../logging/app_logger.dart';
@@ -107,6 +109,50 @@ class EntityListSortNotifier extends Notifier<EntityListSort?> {
   }
 }
 
+final entityListSearchProvider =
+    NotifierProvider<EntityListSearchNotifier, EntityListSearch?>(
+  EntityListSearchNotifier.new,
+);
+
+class EntityListSearchNotifier extends Notifier<EntityListSearch?> {
+  @override
+  EntityListSearch? build() {
+    ref.listen<HomeSelection>(
+      homeSelectionProvider,
+      (previous, next) {
+        if (previous?.selectedEntityName != next.selectedEntityName) {
+          state = null;
+        }
+      },
+    );
+    return null;
+  }
+
+  void apply(EntityListSearch value) {
+    final active = entityListSearchIsActive(value);
+    AppLogger.logUserAction(
+      'home.entityList.search',
+      active
+          ? '${value.fieldKey} ${value.op} ${value.query}'
+          : 'clear',
+    );
+    state = active
+        ? EntityListSearch(
+            fieldKey: value.fieldKey,
+            op: value.op,
+            query: value.query.trim(),
+          )
+        : null;
+    ref.read(entityListProvider.notifier).refresh();
+  }
+
+  void clear() {
+    AppLogger.logUserAction('home.entityList.search', 'clear');
+    state = null;
+    ref.read(entityListProvider.notifier).refresh();
+  }
+}
+
 /// First page + appended pages for infinite scroll when an entity is selected.
 @immutable
 class AccumulatedEntityList {
@@ -186,6 +232,7 @@ Future<AccumulatedEntityList?> _loadEntityListFirstPage(
     entityName: entityName,
     pageIndex: 0,
     sort: sort,
+    search: ref.read(entityListSearchProvider),
   );
   if (result == null) return null;
 
@@ -253,6 +300,7 @@ class EntityListNotifier extends AsyncNotifier<AccumulatedEntityList?> {
         entityName: name,
         pageIndex: pageIndex,
         sort: sort,
+        search: ref.read(entityListSearchProvider),
       );
       if (result == null) {
         state = AsyncValue.data(

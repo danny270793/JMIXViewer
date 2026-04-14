@@ -139,6 +139,24 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get entityRecordDeleteTooltip => 'Eliminar registro';
+
+  @override
+  String get entityRecordDeleteConfirmTitle => '¿Eliminar este registro?';
+
+  @override
+  String get entityRecordDeleteConfirmMessage =>
+      'Esta acción no se puede deshacer. El registro se eliminará del servidor.';
+
+  @override
+  String get entityRecordDeleteConfirmButton => 'Eliminar';
+
+  @override
+  String entityRecordDeleteFailed(String error) {
+    return 'Error al eliminar: $error';
+  }
+
+  @override
   String get homeEntityListSortTooltip => 'Ordenar lista';
 
   @override
@@ -168,4 +186,25 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get homeEntityListSortNoFields =>
       'No hay campos disponibles para ordenar.';
+
+  @override
+  String get homeEntityListSearchTooltip => 'Buscar en la lista';
+
+  @override
+  String get homeEntityListSearchTitle => 'Buscar';
+
+  @override
+  String get homeEntityListSearchField => 'Buscar en el campo';
+
+  @override
+  String get homeEntityListSearchQueryHint => 'Texto a buscar';
+
+  @override
+  String get homeEntityListSearchClear => 'Quitar búsqueda';
+
+  @override
+  String get homeEntityListSearchApply => 'Aplicar';
+
+  @override
+  String get homeEntityListSearchLoadingFields => 'Cargando campos…';
 }

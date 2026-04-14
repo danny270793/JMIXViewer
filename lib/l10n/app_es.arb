@@ -60,6 +60,18 @@
       }
     }
   },
+  "entityRecordDeleteTooltip": "Eliminar registro",
+  "entityRecordDeleteConfirmTitle": "¿Eliminar este registro?",
+  "entityRecordDeleteConfirmMessage": "Esta acción no se puede deshacer. El registro se eliminará del servidor.",
+  "entityRecordDeleteConfirmButton": "Eliminar",
+  "entityRecordDeleteFailed": "Error al eliminar: {error}",
+  "@entityRecordDeleteFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "homeEntityListSortTooltip": "Ordenar lista",
   "homeEntityListSortTitle": "Ordenar lista",
   "homeEntityListSortField": "Ordenar por",
@@ -69,5 +81,12 @@
   "homeEntityListSortDefaultOrder": "Orden predeterminado",
   "homeEntityListSortApply": "Aplicar",
   "homeEntityListSortLoadingFields": "Cargando campos…",
-  "homeEntityListSortNoFields": "No hay campos disponibles para ordenar."
+  "homeEntityListSortNoFields": "No hay campos disponibles para ordenar.",
+  "homeEntityListSearchTooltip": "Buscar en la lista",
+  "homeEntityListSearchTitle": "Buscar",
+  "homeEntityListSearchField": "Buscar en el campo",
+  "homeEntityListSearchQueryHint": "Texto a buscar",
+  "homeEntityListSearchClear": "Quitar búsqueda",
+  "homeEntityListSearchApply": "Aplicar",
+  "homeEntityListSearchLoadingFields": "Cargando campos…"
 }

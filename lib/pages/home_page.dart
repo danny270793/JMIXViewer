@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../business/jmix/entity_list_pagination.dart';
+import '../business/jmix/entity_list_search.dart';
 import '../business/jmix/entity_messages_labels.dart';
 import '../business/jmix/entity_record_collapse_titles.dart';
 import '../l10n/app_localizations.dart';
@@ -22,6 +23,7 @@ class HomePage extends ConsumerWidget {
     final colorScheme = theme.colorScheme;
     final l10n = AppLocalizations.of(context);
     final selection = ref.watch(homeSelectionProvider);
+    final activeSearch = ref.watch(entityListSearchProvider);
 
     return Scaffold(
       drawer: Drawer(
@@ -141,7 +143,20 @@ class HomePage extends ConsumerWidget {
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
-          if (selection.selectedEntityName != null)
+          if (selection.selectedEntityName != null) ...[
+            IconButton(
+              icon: Icon(
+                Icons.search,
+                color:
+                    activeSearch != null ? colorScheme.primary : null,
+              ),
+              tooltip: l10n.homeEntityListSearchTooltip,
+              onPressed: () => _showEntityListSearchSheet(
+                context,
+                ref,
+                selection.selectedEntityName!,
+              ),
+            ),
             IconButton(
               icon: const Icon(Icons.sort),
               tooltip: l10n.homeEntityListSortTooltip,
@@ -150,6 +165,7 @@ class HomePage extends ConsumerWidget {
                 selection.selectedEntityName!,
               ),
             ),
+          ],
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: l10n.settingsTooltip,
@@ -265,11 +281,15 @@ class HomePage extends ConsumerWidget {
         }
         final items = accum.items;
         final entityName = selection.selectedEntityName!;
+        final activeSearch = ref.watch(entityListSearchProvider);
+        final listKey =
+            '${entityName}_${activeSearch?.fieldKey ?? ''}_${activeSearch?.query ?? ''}';
 
         if (items.isEmpty) {
           return LayoutBuilder(
             builder: (context, constraints) {
               return RefreshIndicator(
+                key: ValueKey('empty_$listKey'),
                 onRefresh: () =>
                     ref.read(entityListProvider.notifier).refresh(),
                 child: SingleChildScrollView(
@@ -290,7 +310,7 @@ class HomePage extends ConsumerWidget {
         }
 
         return _InfiniteEntityListView(
-          key: ValueKey(entityName),
+          key: ValueKey(listKey),
           accum: accum,
           entityName: entityName,
           theme: theme,
@@ -300,6 +320,30 @@ class HomePage extends ConsumerWidget {
       },
     );
   }
+}
+
+void _showEntityListSearchSheet(
+  BuildContext context,
+  WidgetRef ref,
+  String entityName,
+) {
+  final initial = ref.read(entityListSearchProvider);
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (sheetContext) {
+      return Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
+        ),
+        child: _EntityListSearchSheet(
+          entityName: entityName,
+          initialSearch: initial,
+        ),
+      );
+    },
+  );
 }
 
 void _showEntityListSortSheet(
@@ -319,6 +363,203 @@ void _showEntityListSortSheet(
       );
     },
   );
+}
+
+class _EntityListSearchSheet extends ConsumerStatefulWidget {
+  const _EntityListSearchSheet({
+    required this.entityName,
+    this.initialSearch,
+  });
+
+  final String entityName;
+  final EntityListSearch? initialSearch;
+
+  @override
+  ConsumerState<_EntityListSearchSheet> createState() =>
+      _EntityListSearchSheetState();
+}
+
+class _EntityListSearchSheetState extends ConsumerState<_EntityListSearchSheet> {
+  late final TextEditingController _queryController;
+  String? _fieldChoice;
+
+  @override
+  void initState() {
+    super.initState();
+    final i = widget.initialSearch;
+    _queryController = TextEditingController(text: i?.query ?? '');
+    _fieldChoice = i?.fieldKey;
+  }
+
+  @override
+  void dispose() {
+    _queryController.dispose();
+    super.dispose();
+  }
+
+  String _resolvedField(List<String> keys, EntityListSearch? current) {
+    final prefer = _fieldChoice ?? current?.fieldKey;
+    if (prefer != null && keys.contains(prefer)) return prefer;
+    return keys.first;
+  }
+
+  List<String> _fieldKeys() {
+    final msgs = ref.watch(drawerEntitiesProvider).maybeWhen(
+          data: (d) => d.messages,
+          orElse: () => <String, dynamic>{},
+        );
+    final meta = ref.watch(entityMetadataProvider(widget.entityName));
+    final accum = ref.watch(entityListProvider).valueOrNull;
+    final fromMeta = meta.maybeWhen(
+      data: (m) => entityMetadataPropertyNamesSorted(
+        m,
+        widget.entityName,
+        msgs,
+        null,
+      ),
+      orElse: () => <String>[],
+    );
+    if (fromMeta.isNotEmpty) return fromMeta;
+    final items = accum?.items ?? const <Map<String, dynamic>>[];
+    if (items.isEmpty) return [];
+    return entityRowColumnKeysSortedByDisplay(
+      items,
+      widget.entityName,
+      msgs,
+      null,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final keys = _fieldKeys();
+    final current = ref.watch(entityListSearchProvider);
+    final metaAsync = ref.watch(entityMetadataProvider(widget.entityName));
+    final msgs = ref.watch(drawerEntitiesProvider).maybeWhen(
+          data: (d) => d.messages,
+          orElse: () => <String, dynamic>{},
+        );
+
+    final loadingFields = keys.isEmpty && metaAsync.isLoading;
+
+    return SafeArea(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                l10n.homeEntityListSearchTitle,
+                style: theme.textTheme.titleLarge,
+              ),
+              const SizedBox(height: 16),
+              if (loadingFields)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 32),
+                  child: Column(
+                    children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 12),
+                      Text(
+                        l10n.homeEntityListSearchLoadingFields,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else if (keys.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Text(
+                    l10n.homeEntityListSortNoFields,
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                )
+              else ...[
+                Text(
+                  l10n.homeEntityListSearchField,
+                  style: theme.textTheme.labelLarge,
+                ),
+                const SizedBox(height: 8),
+                InputDecorator(
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      value: _resolvedField(keys, current),
+                      items: [
+                        for (final k in keys)
+                          DropdownMenuItem<String>(
+                            value: k,
+                            child: Text(
+                              attributeSidebarLabel(
+                                k,
+                                widget.entityName,
+                                msgs,
+                                null,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                      ],
+                      onChanged: (v) {
+                        if (v != null) setState(() => _fieldChoice = v);
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _queryController,
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    hintText: l10n.homeEntityListSearchQueryHint,
+                    isDense: true,
+                  ),
+                  textInputAction: TextInputAction.search,
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        ref.read(entityListSearchProvider.notifier).clear();
+                        Navigator.of(context).pop();
+                      },
+                      child: Text(l10n.homeEntityListSearchClear),
+                    ),
+                    const Spacer(),
+                    FilledButton(
+                      onPressed: () {
+                        ref.read(entityListSearchProvider.notifier).apply(
+                              EntityListSearch(
+                                fieldKey: _resolvedField(keys, current),
+                                query: _queryController.text,
+                              ),
+                            );
+                        Navigator.of(context).pop();
+                      },
+                      child: Text(l10n.homeEntityListSearchApply),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _EntityListSortSheet extends ConsumerStatefulWidget {
