@@ -134,14 +134,6 @@ class HomePage extends ConsumerWidget {
         ),
       ),
       appBar: AppBar(
-        leading: selection.selectedEntityName != null
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () {
-                  ref.read(homeSelectionProvider.notifier).clear();
-                },
-              )
-            : null,
         title: Text(
           selection.selectedEntityName ?? l10n.homeTitle,
           maxLines: 1,
@@ -214,10 +206,6 @@ class HomePage extends ConsumerWidget {
     final drawerMessages = ref.watch(drawerEntitiesProvider).maybeWhen(
           data: (d) => d.messages,
           orElse: () => <String, dynamic>{},
-        );
-    final fieldMessages = ref.watch(fieldMessagesForSelectionProvider).maybeWhen(
-          data: (m) => m,
-          orElse: () => null,
         );
 
     return listAsync.when(
@@ -294,7 +282,7 @@ class HomePage extends ConsumerWidget {
           items,
           entityName,
           drawerMessages,
-          fieldMessages,
+          null,
         );
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -312,7 +300,7 @@ class HomePage extends ConsumerWidget {
                     colorScheme: colorScheme,
                     entityName: entityName,
                     allEntityMessages: drawerMessages,
-                    fieldMessagesForEntity: fieldMessages,
+                    fieldMessagesForEntity: null,
                   );
                 },
               ),
