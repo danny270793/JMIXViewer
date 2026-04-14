@@ -78,8 +78,8 @@
       }
     }
   },
-  "homeEntityListSortTooltip": "Sort list",
-  "homeEntityListSortTitle": "Sort list",
+  "homeEntityListSortTooltip": "Sort",
+  "homeEntityListSortTitle": "Sort",
   "homeEntityListSortField": "Sort by",
   "homeEntityListSortOrder": "Order",
   "homeEntityListSortAscending": "Ascending",
@@ -88,7 +88,7 @@
   "homeEntityListSortApply": "Apply",
   "homeEntityListSortLoadingFields": "Loading fields…",
   "homeEntityListSortNoFields": "No fields available for sorting.",
-  "homeEntityListSearchTooltip": "Search list",
+  "homeEntityListSearchTooltip": "Search",
   "homeEntityListSearchTitle": "Search",
   "homeEntityListSearchField": "Search in field",
   "homeEntityListSearchOperator": "Condition",
@@ -97,5 +97,6 @@
   "homeEntityListSearchValueRequired": "Enter a value for this condition.",
   "homeEntityListSearchClear": "Clear search",
   "homeEntityListSearchApply": "Apply",
-  "homeEntityListSearchLoadingFields": "Loading fields…"
+  "homeEntityListSearchLoadingFields": "Loading fields…",
+  "homeAppBarMenuTooltip": "More options"
 }

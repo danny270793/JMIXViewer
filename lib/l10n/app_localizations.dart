@@ -401,13 +401,13 @@ abstract class AppLocalizations {
   /// No description provided for @homeEntityListSortTooltip.
   ///
   /// In en, this message translates to:
-  /// **'Sort list'**
+  /// **'Sort'**
   String get homeEntityListSortTooltip;
 
   /// No description provided for @homeEntityListSortTitle.
   ///
   /// In en, this message translates to:
-  /// **'Sort list'**
+  /// **'Sort'**
   String get homeEntityListSortTitle;
 
   /// No description provided for @homeEntityListSortField.
@@ -461,7 +461,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeEntityListSearchTooltip.
   ///
   /// In en, this message translates to:
-  /// **'Search list'**
+  /// **'Search'**
   String get homeEntityListSearchTooltip;
 
   /// No description provided for @homeEntityListSearchTitle.
@@ -517,6 +517,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Loading fields…'**
   String get homeEntityListSearchLoadingFields;
+
+  /// No description provided for @homeAppBarMenuTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'More options'**
+  String get homeAppBarMenuTooltip;
 }
 
 class _AppLocalizationsDelegate

@@ -78,8 +78,8 @@
       }
     }
   },
-  "homeEntityListSortTooltip": "Ordenar lista",
-  "homeEntityListSortTitle": "Ordenar lista",
+  "homeEntityListSortTooltip": "Ordenar",
+  "homeEntityListSortTitle": "Ordenar",
   "homeEntityListSortField": "Ordenar por",
   "homeEntityListSortOrder": "Orden",
   "homeEntityListSortAscending": "Ascendente",
@@ -88,7 +88,7 @@
   "homeEntityListSortApply": "Aplicar",
   "homeEntityListSortLoadingFields": "Cargando campos…",
   "homeEntityListSortNoFields": "No hay campos disponibles para ordenar.",
-  "homeEntityListSearchTooltip": "Buscar en la lista",
+  "homeEntityListSearchTooltip": "Buscar",
   "homeEntityListSearchTitle": "Buscar",
   "homeEntityListSearchField": "Buscar en el campo",
   "homeEntityListSearchOperator": "Condición",
@@ -97,5 +97,6 @@
   "homeEntityListSearchValueRequired": "Introduce un valor para esta condición.",
   "homeEntityListSearchClear": "Quitar búsqueda",
   "homeEntityListSearchApply": "Aplicar",
-  "homeEntityListSearchLoadingFields": "Cargando campos…"
+  "homeEntityListSearchLoadingFields": "Cargando campos…",
+  "homeAppBarMenuTooltip": "Más opciones"
 }

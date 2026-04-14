@@ -176,10 +176,10 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get homeEntityListSortTooltip => 'Ordenar lista';
+  String get homeEntityListSortTooltip => 'Ordenar';
 
   @override
-  String get homeEntityListSortTitle => 'Ordenar lista';
+  String get homeEntityListSortTitle => 'Ordenar';
 
   @override
   String get homeEntityListSortField => 'Ordenar por';
@@ -207,7 +207,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'No hay campos disponibles para ordenar.';
 
   @override
-  String get homeEntityListSearchTooltip => 'Buscar en la lista';
+  String get homeEntityListSearchTooltip => 'Buscar';
 
   @override
   String get homeEntityListSearchTitle => 'Buscar';
@@ -236,4 +236,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get homeEntityListSearchLoadingFields => 'Cargando campos…';
+
+  @override
+  String get homeAppBarMenuTooltip => 'Más opciones';
 }
