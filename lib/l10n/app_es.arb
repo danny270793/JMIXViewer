@@ -1,0 +1,42 @@
+{
+  "@@locale": "es",
+  "appTitle": "JMIX Viewer",
+  "splashLoading": "Cargando…",
+  "loginTitle": "Iniciar sesión",
+  "welcomeBack": "Bienvenido de nuevo",
+  "loginBody": "Conéctate a Foodie con credenciales de cliente OAuth2. La app solicita un token de acceso y lo envía como Authorization: Bearer en las llamadas a la API.",
+  "connectToFoodie": "Conectar a Foodie",
+  "connectionFailed": "Error de conexión: {error}",
+  "@connectionFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "homeTitle": "JMIX Viewer",
+  "settingsTooltip": "Ajustes",
+  "connectedToFoodie": "Conectado a Foodie",
+  "signedInBody": "Has iniciado sesión. El token de acceso está activo para las llamadas a la API.",
+  "settingsTitle": "Ajustes",
+  "appearanceSection": "Apariencia",
+  "themeOption": "Tema",
+  "themeSubtitle": "Elige si la app sigue tu dispositivo o usa siempre un aspecto claro u oscuro.",
+  "themeSheetTitle": "Tema",
+  "themeSystem": "Sistema",
+  "themeLight": "Claro",
+  "themeDark": "Oscuro",
+  "themeSystemDesc": "Igual que el modo claro u oscuro del dispositivo",
+  "themeLightDesc": "Usar siempre apariencia clara",
+  "themeDarkDesc": "Usar siempre apariencia oscura",
+  "signOut": "Cerrar sesión",
+  "languageOption": "Idioma",
+  "languageSubtitle": "Igual que el dispositivo o elige inglés o español para la interfaz.",
+  "languageSheetTitle": "Idioma",
+  "languageSystem": "Sistema",
+  "languageEnglish": "Inglés",
+  "languageSpanish": "Español",
+  "languageSystemDesc": "Usar el idioma del dispositivo si la app lo admite",
+  "languageEnglishDesc": "Mostrar siempre la interfaz en inglés",
+  "languageSpanishDesc": "Mostrar siempre la interfaz en español"
+}

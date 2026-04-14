@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../api/jmix/jmix_api_exception.dart';
 import '../auth/foodie_session.dart';
+import '../l10n/app_localizations.dart';
 import '../router/app_router.dart';
 
 /// Obtains an access token via OAuth2 client credentials, then navigates home.
@@ -31,7 +32,9 @@ class _LoginPageState extends State<LoginPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Connection failed: $e')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).connectionFailed('$e')),
+        ),
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -42,10 +45,11 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sign in'),
+        title: Text(l10n.loginTitle),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -56,16 +60,14 @@ class _LoginPageState extends State<LoginPage> {
             children: [
               const SizedBox(height: 24),
               Text(
-                'Welcome back',
+                l10n.welcomeBack,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Connect to Foodie using OAuth2 client credentials. '
-                'The app requests an access token, then sends it as '
-                'Authorization: Bearer on API calls.',
+                l10n.loginBody,
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -82,7 +84,7 @@ class _LoginPageState extends State<LoginPage> {
                         width: 22,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Connect to Foodie'),
+                    : Text(l10n.connectToFoodie),
               ),
             ],
           ),
