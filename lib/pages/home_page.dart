@@ -9,7 +9,6 @@ import '../logging/app_logger.dart';
 import '../providers/home_providers.dart';
 import '../router/app_router.dart';
 import '../widgets/entity_record_expansion_tile.dart';
-import '../widgets/pagination_bar.dart';
 
 /// Shown after a successful Foodie / Jmix sign-in.
 class HomePage extends ConsumerWidget {
@@ -232,104 +231,159 @@ class HomePage extends ConsumerWidget {
           ),
         ),
       ),
-      data: (result) {
-        if (result == null) {
+      data: (accum) {
+        if (accum == null) {
           return const SizedBox.shrink();
         }
-        final items = result.items;
+        final items = accum.items;
         final entityName = selection.selectedEntityName!;
-        final pageIndex = selection.pageIndex;
 
         if (items.isEmpty) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: Center(
-                  child: Text(
-                    'No rows on this page',
-                    style: theme.textTheme.bodyLarge,
-                  ),
-                ),
-              ),
-              PaginationBar(
-                label: entityListPaginationBarLabel(
-                  pageIndex: pageIndex,
-                  pageSize: kDefaultEntityPageSize,
-                  itemCount: 0,
-                  totalCount: result.totalCount,
-                ),
-                onPrevious: pageIndex > 0
-                    ? () => ref.read(homeSelectionProvider.notifier).setPage(
-                          pageIndex - 1,
-                        )
-                    : null,
-                onNext: entityListHasNextPage(
-                  pageIndex: pageIndex,
-                  pageSize: kDefaultEntityPageSize,
-                  result: result,
-                )
-                    ? () => ref.read(homeSelectionProvider.notifier).setPage(
-                          pageIndex + 1,
-                        )
-                    : null,
-              ),
-            ],
+          return Center(
+            child: Text(
+              'No rows',
+              style: theme.textTheme.bodyLarge,
+            ),
           );
         }
 
-        final keys = entityRowColumnKeysSortedByDisplay(
-          items,
-          entityName,
-          drawerMessages,
-          null,
-        );
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                itemCount: items.length,
-                separatorBuilder: (_, _) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  return EntityRecordExpansionTile(
-                    row: items[index],
-                    orderedColumnKeys: keys,
-                    theme: theme,
-                    colorScheme: colorScheme,
-                    entityName: entityName,
-                    allEntityMessages: drawerMessages,
-                    fieldMessagesForEntity: null,
-                  );
-                },
-              ),
-            ),
-            PaginationBar(
-              label: entityListPaginationBarLabel(
-                pageIndex: pageIndex,
-                pageSize: kDefaultEntityPageSize,
-                itemCount: items.length,
-                totalCount: result.totalCount,
-              ),
-              onPrevious: pageIndex > 0
-                  ? () => ref.read(homeSelectionProvider.notifier).setPage(
-                        pageIndex - 1,
-                      )
-                  : null,
-              onNext: entityListHasNextPage(
-                pageIndex: pageIndex,
-                pageSize: kDefaultEntityPageSize,
-                result: result,
-              )
-                  ? () => ref.read(homeSelectionProvider.notifier).setPage(
-                        pageIndex + 1,
-                      )
-                  : null,
-            ),
-          ],
+        return _InfiniteEntityListView(
+          key: ValueKey(entityName),
+          accum: accum,
+          entityName: entityName,
+          theme: theme,
+          colorScheme: colorScheme,
+          drawerMessages: drawerMessages,
         );
       },
+    );
+  }
+}
+
+class _InfiniteEntityListView extends ConsumerStatefulWidget {
+  const _InfiniteEntityListView({
+    super.key,
+    required this.accum,
+    required this.entityName,
+    required this.theme,
+    required this.colorScheme,
+    required this.drawerMessages,
+  });
+
+  final AccumulatedEntityList accum;
+  final String entityName;
+  final ThemeData theme;
+  final ColorScheme colorScheme;
+  final Map<String, dynamic> drawerMessages;
+
+  @override
+  ConsumerState<_InfiniteEntityListView> createState() =>
+      _InfiniteEntityListViewState();
+}
+
+class _InfiniteEntityListViewState extends ConsumerState<_InfiniteEntityListView> {
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController()..addListener(_onScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fillViewportIfNeeded());
+  }
+
+  /// If everything fits on screen, keep loading pages until the list scrolls or ends.
+  Future<void> _fillViewportIfNeeded() async {
+    for (var i = 0; i < 64; i++) {
+      if (!mounted) return;
+      final accum = ref.read(entityListProvider).valueOrNull;
+      if (accum == null || !accum.hasMore || accum.isLoadingMore) return;
+      if (!_scrollController.hasClients) return;
+      final p = _scrollController.position;
+      if (p.maxScrollExtent > 0) return;
+      await ref.read(entityListProvider.notifier).loadMore();
+    }
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final p = _scrollController.position;
+    final nearEnd = p.maxScrollExtent <= 0 ||
+        p.pixels >= p.maxScrollExtent - 400;
+    if (nearEnd) {
+      ref.read(entityListProvider.notifier).loadMore();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final accum = ref.watch(entityListProvider).valueOrNull ?? widget.accum;
+    final items = accum.items;
+    final keys = entityRowColumnKeysSortedByDisplay(
+      items,
+      widget.entityName,
+      widget.drawerMessages,
+      null,
+    );
+
+    final summary = entityListInfiniteSummary(
+      loadedCount: items.length,
+      totalCount: accum.totalCount,
+      hasMore: accum.hasMore,
+    );
+
+    final extra = (accum.hasMore && accum.isLoadingMore) ? 1 : 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+          child: Text(
+            summary,
+            style: widget.theme.textTheme.bodySmall?.copyWith(
+              color: widget.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+        Expanded(
+          child: ListView.separated(
+            controller: _scrollController,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            itemCount: items.length + extra,
+            separatorBuilder: (context, _) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              if (index >= items.length) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(
+                    child: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                );
+              }
+              return EntityRecordExpansionTile(
+                row: items[index],
+                orderedColumnKeys: keys,
+                theme: widget.theme,
+                colorScheme: widget.colorScheme,
+                entityName: widget.entityName,
+                allEntityMessages: widget.drawerMessages,
+                fieldMessagesForEntity: null,
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
