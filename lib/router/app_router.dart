@@ -5,6 +5,7 @@ import '../pages/home_page.dart';
 import '../pages/login_page.dart';
 import '../pages/settings_page.dart';
 import '../pages/splash_page.dart';
+import 'navigation_log_observer.dart';
 
 /// Route path segments for deep linking and navigation.
 abstract final class AppRoutes {
@@ -17,6 +18,7 @@ abstract final class AppRoutes {
 /// Shared app router (single source of truth for navigation).
 final GoRouter appRouter = GoRouter(
   initialLocation: AppRoutes.splash,
+  observers: [NavigationLogObserver()],
   routes: [
     GoRoute(
       path: AppRoutes.splash,

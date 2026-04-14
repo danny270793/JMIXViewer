@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
+import '../../logging/app_logger.dart';
 import 'jmix_api_exception.dart';
 import 'jmix_client_config.dart';
 import 'models/jmix_error.dart';
@@ -22,7 +23,9 @@ class JmixOAuthConnector {
                 receiveTimeout: const Duration(seconds: 30),
                 validateStatus: (code) => code != null && code < 500,
               ),
-            );
+            ) {
+    _dio.interceptors.add(HttpRequestUrlInterceptor());
+  }
 
   final JmixClientConfig config;
   final Dio _dio;
