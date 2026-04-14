@@ -152,13 +152,29 @@ class JmixRestConnector {
     return r;
   }
 
+  /// Search with filter and list options in the JSON body; null optionals omitted.
   Future<JmixEntityListResult> searchEntitiesPost(
     String entityName,
-    Map<String, dynamic> body,
-  ) async {
+    Map<String, dynamic> filterBody, {
+    String? fetchPlan,
+    String? limit,
+    String? offset,
+    String? sort,
+    bool? returnCount,
+    bool? dynamicAttributes,
+  }) async {
     final r = await _dio.post<dynamic>(
       'entities/${_enc(entityName)}/search',
-      data: body,
+      data: _nonNullQuery({
+        'filter': filterBody,
+        'fetchPlan': fetchPlan,
+        'limit': limit,
+        'offset': offset,
+        'sort': sort,
+        'returnNulls': true,
+        'returnCount': returnCount,
+        'dynamicAttributes': dynamicAttributes,
+      }),
       options: Options(responseType: ResponseType.json),
     );
     _throwIfError(r);
