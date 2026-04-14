@@ -98,5 +98,24 @@
   "homeEntityListSearchClear": "Quitar búsqueda",
   "homeEntityListSearchApply": "Aplicar",
   "homeEntityListSearchLoadingFields": "Cargando campos…",
+  "entityRecordCreateTitle": "Nuevo {name}",
+  "@entityRecordCreateTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "entityRecordCreateSuccess": "Registro creado.",
+  "entityRecordCreateNoFields": "No hay campos creables definidos para esta entidad.",
+  "entityRecordCreatePrepareFailed": "No se pudo cargar el formulario: {error}",
+  "@entityRecordCreatePrepareFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "homeEntityListCreate": "Crear",
   "homeAppBarMenuTooltip": "Más opciones"
 }

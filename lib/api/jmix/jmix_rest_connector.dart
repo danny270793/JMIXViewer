@@ -459,7 +459,7 @@ class JmixRestConnector {
     String path, {
     Map<String, dynamic>? query,
   }) async {
-    final r = await _dio.get<Map<String, dynamic>>(
+    final r = await _dio.get<dynamic>(
       path,
       queryParameters: query,
     );
@@ -468,7 +468,10 @@ class JmixRestConnector {
     if (data == null) {
       throw JmixApiException(message: 'Empty response', statusCode: r.statusCode);
     }
-    return data;
+    if (data is! Map) {
+      throw JmixApiException(message: 'Expected JSON object', statusCode: r.statusCode);
+    }
+    return Map<String, dynamic>.from(data);
   }
 
   Future<Map<String, dynamic>> _postMap(
@@ -476,26 +479,40 @@ class JmixRestConnector {
     required Map<String, dynamic> data,
     int expectStatus = 200,
   }) async {
-    final r = await _dio.post<Map<String, dynamic>>(path, data: data);
+    final r = await _dio.post<dynamic>(path, data: data);
     _throwIfError(r);
     final out = r.data;
     if (out == null) {
       throw JmixApiException(message: 'Empty response', statusCode: r.statusCode);
     }
-    return out;
+    if (out is! Map) {
+      throw JmixApiException(
+        message: 'Unexpected response type',
+        statusCode: r.statusCode,
+        rawBody: out.toString(),
+      );
+    }
+    return Map<String, dynamic>.from(out);
   }
 
   Future<Map<String, dynamic>> _putMap(
     String path, {
     required Map<String, dynamic> data,
   }) async {
-    final r = await _dio.put<Map<String, dynamic>>(path, data: data);
+    final r = await _dio.put<dynamic>(path, data: data);
     _throwIfError(r);
     final out = r.data;
     if (out == null) {
       throw JmixApiException(message: 'Empty response', statusCode: r.statusCode);
     }
-    return out;
+    if (out is! Map) {
+      throw JmixApiException(
+        message: 'Unexpected response type',
+        statusCode: r.statusCode,
+        rawBody: out.toString(),
+      );
+    }
+    return Map<String, dynamic>.from(out);
   }
 
   Future<void> _delete(String path) async {
@@ -506,12 +523,21 @@ class JmixRestConnector {
   void _throwIfError(Response<dynamic> r) {
     final code = r.statusCode ?? 0;
     if (code >= 200 && code < 300) return;
+    AppLogger.logHttpNonSuccessResponseBody(r.requestOptions.uri, r.data);
     final data = r.data;
-    if (data is Map<String, dynamic>) {
-      if (data.containsKey('details') || data.containsKey('error')) {
-        final err = JmixError.fromJson(data);
+    if (data is List) {
+      throw JmixApiException(
+        message: formatJmixValidationErrorList(data),
+        statusCode: code,
+        rawBody: data.toString(),
+      );
+    }
+    if (data is Map) {
+      final map = Map<String, dynamic>.from(data);
+      if (map.containsKey('error') || map.containsKey('details')) {
+        final err = JmixError.fromJson(map);
         throw JmixApiException(
-          message: err.details ?? err.error ?? 'Request failed',
+          message: jmixErrorUserMessage(err),
           statusCode: code,
           error: err,
         );

@@ -27,20 +27,33 @@ class JmixApiException implements Exception {
     if (e is DioException) {
       final response = e.response;
       final data = response?.data;
-      JmixError? err;
-      String? raw;
-      if (data is Map<String, dynamic>) {
-        if (data.containsKey('error') && data.containsKey('details')) {
-          err = JmixError.fromJson(data);
+      final code = response?.statusCode ?? 0;
+      if (data is List) {
+        return JmixApiException(
+          message: formatJmixValidationErrorList(data),
+          statusCode: code == 0 ? null : code,
+          cause: e,
+        );
+      }
+      if (data is Map) {
+        final map = Map<String, dynamic>.from(data);
+        if (map.containsKey('error') || map.containsKey('details')) {
+          final err = JmixError.fromJson(map);
+          return JmixApiException(
+            message: jmixErrorUserMessage(err),
+            statusCode: code == 0 ? null : code,
+            error: err,
+            cause: e,
+          );
         }
-      } else if (data is String) {
+      }
+      String? raw;
+      if (data is String) {
         raw = data;
       }
-      final code = response?.statusCode ?? 0;
       return JmixApiException(
-        message: err?.details ?? err?.error ?? e.message ?? 'HTTP error',
+        message: raw ?? e.message ?? 'HTTP error',
         statusCode: code == 0 ? null : code,
-        error: err,
         rawBody: raw,
         cause: e,
       );
