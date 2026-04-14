@@ -7,6 +7,7 @@ import '../business/jmix/entity_messages_labels.dart';
 import '../business/jmix/entity_record_collapse_titles.dart';
 import '../l10n/app_localizations.dart';
 import '../logging/app_logger.dart';
+import '../providers/entity_metadata_providers.dart';
 import '../providers/home_providers.dart';
 import '../router/app_router.dart';
 import 'entity_record_detail_page.dart';
@@ -140,6 +141,15 @@ class HomePage extends ConsumerWidget {
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
+          if (selection.selectedEntityName != null)
+            IconButton(
+              icon: const Icon(Icons.sort),
+              tooltip: l10n.homeEntityListSortTooltip,
+              onPressed: () => _showEntityListSortSheet(
+                context,
+                selection.selectedEntityName!,
+              ),
+            ),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: l10n.settingsTooltip,
@@ -292,6 +302,228 @@ class HomePage extends ConsumerWidget {
   }
 }
 
+void _showEntityListSortSheet(
+  BuildContext context,
+  String entityName,
+) {
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (sheetContext) {
+      return Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
+        ),
+        child: _EntityListSortSheet(entityName: entityName),
+      );
+    },
+  );
+}
+
+class _EntityListSortSheet extends ConsumerStatefulWidget {
+  const _EntityListSortSheet({required this.entityName});
+
+  final String entityName;
+
+  @override
+  ConsumerState<_EntityListSortSheet> createState() =>
+      _EntityListSortSheetState();
+}
+
+class _EntityListSortSheetState extends ConsumerState<_EntityListSortSheet> {
+  String? _fieldChoice;
+  bool? _ascChoice;
+
+  String _resolvedField(List<String> keys, EntityListSort? current) {
+    final prefer = _fieldChoice ?? current?.fieldKey;
+    if (prefer != null && keys.contains(prefer)) return prefer;
+    if (current == null && keys.contains('createdDate')) {
+      return 'createdDate';
+    }
+    return keys.first;
+  }
+
+  bool _resolvedAsc(EntityListSort? current, List<String> keys) {
+    if (_ascChoice != null) return _ascChoice!;
+    if (current != null) return current.ascending;
+    if (keys.contains('createdDate')) return false;
+    return true;
+  }
+
+  List<String> _sortableKeys() {
+    final msgs = ref.watch(drawerEntitiesProvider).maybeWhen(
+          data: (d) => d.messages,
+          orElse: () => <String, dynamic>{},
+        );
+    final meta = ref.watch(entityMetadataProvider(widget.entityName));
+    final accum = ref.watch(entityListProvider).valueOrNull;
+    final fromMeta = meta.maybeWhen(
+      data: (m) => entityMetadataPropertyNamesSorted(
+        m,
+        widget.entityName,
+        msgs,
+        null,
+      ),
+      orElse: () => <String>[],
+    );
+    if (fromMeta.isNotEmpty) return fromMeta;
+    final items = accum?.items ?? const <Map<String, dynamic>>[];
+    if (items.isEmpty) return [];
+    return entityRowColumnKeysSortedByDisplay(
+      items,
+      widget.entityName,
+      msgs,
+      null,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final keys = _sortableKeys();
+    final current = ref.watch(entityListSortProvider);
+    final metaAsync = ref.watch(entityMetadataProvider(widget.entityName));
+    final msgs = ref.watch(drawerEntitiesProvider).maybeWhen(
+          data: (d) => d.messages,
+          orElse: () => <String, dynamic>{},
+        );
+
+    final loadingFields = keys.isEmpty && metaAsync.isLoading;
+
+    return SafeArea(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                l10n.homeEntityListSortTitle,
+                style: theme.textTheme.titleLarge,
+              ),
+              const SizedBox(height: 16),
+              if (loadingFields)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 32),
+                  child: Column(
+                    children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 12),
+                      Text(
+                        l10n.homeEntityListSortLoadingFields,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else if (keys.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Text(
+                    l10n.homeEntityListSortNoFields,
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                )
+              else ...[
+                Text(
+                  l10n.homeEntityListSortField,
+                  style: theme.textTheme.labelLarge,
+                ),
+                const SizedBox(height: 8),
+                InputDecorator(
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      value: _resolvedField(keys, current),
+                      items: [
+                        for (final k in keys)
+                          DropdownMenuItem<String>(
+                            value: k,
+                            child: Text(
+                              attributeSidebarLabel(
+                                k,
+                                widget.entityName,
+                                msgs,
+                                null,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                      ],
+                      onChanged: (v) {
+                        if (v != null) setState(() => _fieldChoice = v);
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.homeEntityListSortOrder,
+                  style: theme.textTheme.labelLarge,
+                ),
+                const SizedBox(height: 8),
+                SegmentedButton<bool>(
+                  segments: [
+                    ButtonSegment<bool>(
+                      value: true,
+                      label: Text(l10n.homeEntityListSortAscending),
+                    ),
+                    ButtonSegment<bool>(
+                      value: false,
+                      label: Text(l10n.homeEntityListSortDescending),
+                    ),
+                  ],
+                  emptySelectionAllowed: false,
+                  selected: {_resolvedAsc(current, keys)},
+                  onSelectionChanged: (s) {
+                    setState(() => _ascChoice = s.single);
+                  },
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        ref.read(entityListSortProvider.notifier).clear();
+                        Navigator.of(context).pop();
+                      },
+                      child: Text(l10n.homeEntityListSortDefaultOrder),
+                    ),
+                    const Spacer(),
+                    FilledButton(
+                      onPressed: () {
+                        final field = _resolvedField(keys, current);
+                        ref.read(entityListSortProvider.notifier).apply(
+                              EntityListSort(
+                                fieldKey: field,
+                                ascending: _resolvedAsc(current, keys),
+                              ),
+                            );
+                        Navigator.of(context).pop();
+                      },
+                      child: Text(l10n.homeEntityListSortApply),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _InfiniteEntityListView extends ConsumerStatefulWidget {
   const _InfiniteEntityListView({
     super.key,
@@ -387,7 +619,7 @@ class _InfiniteEntityListViewState extends ConsumerState<_InfiniteEntityListView
             child: ListView.separated(
               controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              padding: EdgeInsets.zero,
               itemCount: items.length + extra,
               separatorBuilder: (context, _) => const Divider(height: 1),
               itemBuilder: (context, index) {

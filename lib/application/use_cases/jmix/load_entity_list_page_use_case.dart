@@ -13,6 +13,7 @@ final class LoadEntityListPageUseCase extends BusinessUseCase {
   Future<JmixEntityListResult?> call({
     required String? entityName,
     required int pageIndex,
+    String? sort,
   }) {
     return run('home.entityList', () async {
       if (entityName == null) return null;
@@ -20,6 +21,7 @@ final class LoadEntityListPageUseCase extends BusinessUseCase {
         entityName,
         limit: '$kDefaultEntityPageSize',
         offset: '${pageIndex * kDefaultEntityPageSize}',
+        sort: sort,
         returnCount: true,
       );
     });

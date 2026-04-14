@@ -59,5 +59,15 @@
         "type": "String"
       }
     }
-  }
+  },
+  "homeEntityListSortTooltip": "Ordenar lista",
+  "homeEntityListSortTitle": "Ordenar lista",
+  "homeEntityListSortField": "Ordenar por",
+  "homeEntityListSortOrder": "Orden",
+  "homeEntityListSortAscending": "Ascendente",
+  "homeEntityListSortDescending": "Descendente",
+  "homeEntityListSortDefaultOrder": "Orden predeterminado",
+  "homeEntityListSortApply": "Aplicar",
+  "homeEntityListSortLoadingFields": "Cargando campos…",
+  "homeEntityListSortNoFields": "No hay campos disponibles para ordenar."
 }
